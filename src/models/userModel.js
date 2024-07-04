@@ -1,75 +1,48 @@
-const mongoose = require('mongoose')
- 
-const userSchema = mongoose.Schema({
-    FirstName: {
-        type: String,
-        required: true,
-        trim: true
-    },
-    LastName: {
-        type: String,
-        trim: true
-    },
-    Age: Number,
-    Gender: {
-        type: String,
-        enum: ['Male', "Female", "Other"]
-    },
-    Mobile: {
-        type: String,
-        required: true,
-        unique:true,
-    },
-    Phone: String,
-    Area: String,
-    City: String,
-    State: String,
-    Country: String,
-    PinCode: String,
-    Roles: [{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Role',
-    }],
+const mongoose = require("mongoose");
+const walletSchema = require("./walletModel").schema;
 
-    IsEnabled: {
-        type: Boolean,
-        default: true
-    },
-    CreatedDate: {
-        type: Date,
-        default: Date.now()
-    },
-    UpdatedDate: {
-        type: Date,
-        default: Date.now()
-    },
-    IsDeleted: {
-        type: Boolean,
-        default: false
-    },
-    IsEnquiryVisiable: {
-        type: Boolean,
-        default: false
-    },
-    CreatedBy: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "User"
-    },
-    UpdatedBy: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "User"
-    },
-    ProfilePhoto: String,
+const userSchema = new mongoose.Schema({
+  full_name: { type: String, required: true },
+  user_name: { type: String, required: true, unique: true },
+  email: { type: String, required: true, unique: true },
+  phone: { type: String, required: true, unique: true },
+  gender: { type: String, required: true },
+  profile_image: { type: String },
+  deactiveAccount: {
+    type: Boolean,
+    default: false,
+  },
+  blockByAdmin: {
+    type: Boolean,
+    default: false
+  },
+  dob: { type: String },
+  bio: { type: String },
+  role: { type: mongoose.Schema.Types.ObjectId, ref: "Role" },
+  partner: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+  BFFs: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+  scoreboard: { type: Number, default: 0 },
+  interest_in_gender: { type: String },
+  follows: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+  followers: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+  location: {
+    type: { type: String, enum: ["Point"] },
+    coordinates: { type: [Number] },
+  },
+  token: { type: String },
+  whatsappNotify: { type: Boolean },
+  interests: {
+    categories: [{ type: mongoose.Schema.Types.ObjectId, ref: "Category" }],
+    subcategories: [{ type: mongoose.Schema.Types.ObjectId, ref: "Category" }],
+  },
+  wallet: walletSchema,
+  instaUrl: { type: String },
+  twitterUrl: { type: String },
+  occupation: { type: String },
+  created_at: { type: Date, default: Date.now },
+  updated_at: { type: Date, default: Date.now },
+});
 
-    EmailId: {
-        type: String,
-        required: true,
-        lowercase: true,
-        unique:true,
-    },
+userSchema.index({ location: "2dsphere" });
 
-},)
-
-const User = mongoose.model('User', userSchema)
-
-module.exports = User
+module.exports = mongoose.model("User", userSchema);
