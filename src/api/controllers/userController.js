@@ -199,30 +199,41 @@ exports.updateUsers = async (req, res) => {
 
 exports.getAllUsers = async (req, res) => {
   try {
-    // console.log(req.query,'req from admin')
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 10;
-    if (page == 1) {
-      var pageSkip = 0;
-    } else {
-      pageSkip = (page - 1) * limit;
-    }
+    const { page, pageSize } = req.query;
+    const pageNumber = parseInt(page) || 1;
+    const size = parseInt(pageSize) || 10;
+    const search = req.query.search || '';
+   
+    const searchQuery = {
+      deactiveAccount: false,
+        $or: [
+            { full_name: { $regex: search, $options: 'i' } }, 
+        ]
+    };
+  
+   if(req.query.type){
+    searchQuery.userType = req.query.type
+   }
+    const users = await User.find(searchQuery)
+      // .populate('Roles')
+      .sort({ CreatedDate: -1 })
+      .skip((pageNumber - 1) * size)
+      .limit(size)
+      ;
+     
 
-    const result = await User.aggregate([
-      { $match: { deactiveAccount: false } },
-      { $skip: pageSkip },
-      { $limit: limit },
-    ]).allowDiskUse(true);
+    const totalCount = await User.countDocuments(searchQuery);
+    const totalPages = Math.ceil(totalCount / size);
 
-    const message = "All users"
-    return res
-      .status(constants.status_code.header.ok)
-      .send({
-        statusCode: 200,
-        data: result,
-        success: true,
-        message: message,
-      });
+    return res.status(constants.status_code.header.ok).send({
+      statusCode: 200,
+      data: users,
+      success: true,
+      totalCount: totalCount>0 ? totalCount-1:totalCount,
+      count: users.length,
+      pageNumber: pageNumber,
+      totalPages: totalPages,
+    });
   } catch (error) {
     return res
       .status(constants.status_code.header.server_error)
