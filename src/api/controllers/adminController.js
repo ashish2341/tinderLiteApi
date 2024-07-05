@@ -32,3 +32,35 @@ exports.login = async (req, res) => {
       .send({ statusCode: 500, error: error.message, success: false });
   }
 };
+exports.getDataForAdmin = async (req, res) => {
+  try {
+
+    
+
+    const TotalUser = await User.find({ IsDeleted: false })
+    
+
+   
+ 
+
+   
+    
+   
+  
+
+    return res.status(200).send({
+      statusCode: 200,
+      totalUser: TotalUser.length,
+      todayUsers: TodayUsers.length,
+      totalProperty: TotalProperty.length,
+      success: true
+    });
+
+  } catch (error) {
+    return res.status(500).send({
+      statusCode: 500,
+      error: error.message,
+      success: false
+    });
+  }
+};
