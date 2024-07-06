@@ -21,6 +21,7 @@ const {
 router.post("/addUser", addUser);
 router.post("/login", login);
 router.get("/loginUserData", loginUserData);
+router.get("/getAllUsers", getAllUsers);
 router.put("/updateUser/:id", updateUsers);
 router.get("/getUserById/:id", getUserById);
 router.delete("/deleteUser/:id", deleteUser);

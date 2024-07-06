@@ -140,6 +140,50 @@ exports.loginUserData = async (req, res) => {
   }
 };
 
+exports.getAllUsers = async (req, res) => {
+  try {
+    const { page, pageSize } = req.query;
+    const pageNumber = parseInt(page) || 1;
+    const size = parseInt(pageSize) || 10;
+    const search = req.query.search || '';
+   
+    const searchQuery = {
+      deactiveAccount: false,
+        $or: [
+            { full_name: { $regex: search, $options: 'i' } }, 
+        ]
+    };
+  
+   if(req.query.type){
+    searchQuery.userType = req.query.type
+   }
+    const users = await User.find(searchQuery)
+      // .populate('Roles')
+      .sort({ CreatedDate: -1 })
+      .skip((pageNumber - 1) * size)
+      .limit(size)
+      ;
+     console.log("users",users)
+
+    const totalCount = await User.countDocuments(searchQuery);
+    const totalPages = Math.ceil(totalCount / size);
+
+    return res.status(constants.status_code.header.ok).send({
+      statusCode: 200,
+      data: users,
+      success: true,
+      totalCount: totalCount>0 ? totalCount-1:totalCount,
+      count: users.length,
+      pageNumber: pageNumber,
+      totalPages: totalPages,
+    });
+  } catch (error) {
+    return res
+      .status(constants.status_code.header.server_error)
+      .send({ statusCode: 500, error: error.message, success: false });
+  }
+};
+
 exports.updateUsers = async (req, res) => {
   try {
     const userId = req.params.id;
