@@ -22,7 +22,7 @@ exports.addUser = async (req, res) => {
       whatsappNotify,
     } = req.body;
 
-    const userData = new User({
+    let userData = new User({
       full_name: full_name,
       email: email,
       phone: phone,
@@ -40,7 +40,8 @@ exports.addUser = async (req, res) => {
       expiresIn: "360000s",
     });
     let message = "signup success";
-    const result = await userData.save();
+    let result = await userData.save();
+    console.log(result)
     // const mailData = {
     //   name: fullName,
     //   email: email,
@@ -197,39 +198,6 @@ exports.updateUsers = async (req, res) => {
   }
 };
 
-exports.getAllUsers = async (req, res) => {
-  try {
-    // console.log(req.query,'req from admin')
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 10;
-    if (page == 1) {
-      var pageSkip = 0;
-    } else {
-      pageSkip = (page - 1) * limit;
-    }
-
-    const result = await User.aggregate([
-      { $match: { deactiveAccount: false } },
-      { $skip: pageSkip },
-      { $limit: limit },
-    ]).allowDiskUse(true);
-
-    const message = "All users"
-    return res
-      .status(constants.status_code.header.ok)
-      .send({
-        statusCode: 200,
-        data: result,
-        success: true,
-        message: message,
-      });
-  } catch (error) {
-    return res
-      .status(constants.status_code.header.server_error)
-      .send({ statusCode: 500, error: error.message, success: false });
-  }
-};
-
 exports.getUserById = async (req, res) => {
   try {
     let userId = req.params.id;
@@ -257,6 +225,36 @@ exports.getUserById = async (req, res) => {
       .send({ statusCode: 500, error: error.message, success: false });
   }
 };
+
+exports.deleteUser = async function (req, res) {
+  try {
+    const userId = req.params.id;
+    
+    let result = await User.findByIdAndDelete(userId);
+    if (!result) {
+      return res
+      .status(constants.status_code.header.server_error)
+      .send({ statusCode: 500, error: "User Not Deleted..!", success: false });
+    }
+    //clear cache
+    // if (cache.has(userId)) {
+    //   cache.del(userId);
+    // }
+    return res
+      .status(constants.status_code.header.ok)
+      .send({
+        statusCode: 200,
+        data: {},
+        success: true,
+        message: "User deleted successfully",
+      });
+  } catch (error) {
+    return res
+      .status(constants.status_code.header.server_error)
+      .send({ statusCode: 500, error: error.message, success: false });
+  }
+};
+
 // exports.getAllUser = async (req, res) => {
 //     try {
 //         const { page, pageSize } = req.query;
