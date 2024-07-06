@@ -18,7 +18,7 @@ const userSchema = new mongoose.Schema({
   },
   dob: { type: String },
   bio: { type: String },
-  role: { type: mongoose.Schema.Types.ObjectId, ref: "Role" },
+  userType: { type: String, enum:["Player","Coach"],default:"Player" },
   partner: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
   BFFs: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
   scoreboard: { type: Number, default: 0 },
