@@ -6,8 +6,13 @@ const liveGameSchema = new mongoose.Schema({
   meetings: [
     {
       meetingId: { type: String },
-      participants: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
-    }
+      participants: [
+        {
+          userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+          name: { type: String },
+        },
+      ],
+    },
   ],
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
