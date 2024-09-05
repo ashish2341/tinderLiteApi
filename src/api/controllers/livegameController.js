@@ -60,28 +60,28 @@ exports.addUserInMeeting = async (req, res) => {
       liveGame.meetings.push(meeting);
     }
 
-    let name = "Mary Sue";
-    let picture = "https://i.imgur.com/test.jpg";
-    let preset_name = "livestream_viewer";
-    let custom_participant_id = "string";
-    console.log(meeting.meetingId);
-    const dyteResponse = await DyteAPI.post(
-      `/meetings/${meeting.meetingId}/participants`,
-      {
-        name,
-        picture,
-        preset_name,
-        custom_participant_id,
-      }
-    );
+    // let name = "Mary Sue";
+    // let picture = "https://i.imgur.com/test.jpg";
+    // let preset_name = "livestream_viewer";
+    // let custom_participant_id = "string";
+    // console.log(meeting.meetingId);
+    // const dyteResponse = await DyteAPI.post(
+    //   `/meetings/${meeting.meetingId}/participants`,
+    //   {
+    //     name,
+    //     picture,
+    //     preset_name,
+    //     custom_participant_id,
+    //   }
+    // );
 
-    console.log("Dyte add participant response:", dyteResponse.data);
+    // console.log("Dyte add participant response:", dyteResponse.data);
 
-    if (!dyteResponse.data.success) {
-      return res
-        .status(dyteResponse.status)
-        .json({ error: "Failed to add user to the Dyte meeting" });
-    }
+    // if (!dyteResponse.data.success) {
+    //   return res
+    //     .status(dyteResponse.status)
+    //     .json({ error: "Failed to add user to the Dyte meeting" });
+    // }
 
     meeting.participants.push({ userId, name: user.user_name });
 
@@ -112,9 +112,51 @@ exports.createLiveGame = async (req, res) => {
     });
 
     await newLiveGame.save();
-    res.status(201).json(newLiveGame);
+
+    return res
+      .status(constants.status_code.header.ok)
+      .send({ statusCode: 200, data: newLiveGame, success: true, message: "Game created successfully..!" });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    return res
+      .status(constants.status_code.header.server_error)
+      .send({ statusCode: 500, error: error.message, success: false });
+  }
+};
+
+exports.getAllGames = async (req, res) => {
+  try {
+
+    const liveGame = await LiveGame.find()
+
+    return res.status(constants.status_code.header.ok).send({
+      statusCode: 200,
+      data: liveGame,
+      success: true,
+      message: "Games fetched successfully.",
+    });
+  } catch (error) {
+    return res
+      .status(constants.status_code.header.server_error)
+      .send({ statusCode: 500, error: error.message, success: false });
+  }
+};
+
+exports.getGameById = async (req, res) => {
+  try {
+    const gameId = req.params.id;
+
+    const liveGame = await LiveGame.findById(gameId);
+
+    return res.status(constants.status_code.header.ok).send({
+      statusCode: 200,
+      data: liveGame,
+      success: true,
+      message: "Game fetched successfully.",
+    });
+  } catch (error) {
+    return res
+      .status(constants.status_code.header.server_error)
+      .send({ statusCode: 500, error: error.message, success: false });
   }
 };
 
@@ -123,14 +165,12 @@ exports.leftParticipant = async (req, res) => {
     const { participant, meeting } = req.body;
     console.log("req.body",req.body);
 
-    // Find the LiveGame document containing the meetingId
     const liveGame = await LiveGame.findOne({ "meetings.meetingId": meeting.id });
 
     if (!liveGame) {
       return res.status(404).json({ error: "Meeting not found" });
     }
 
-    // Find the meeting by meetingId
     const miting = liveGame.meetings.find(
       (m) => m.meetingId === meeting.id
     );
@@ -139,7 +179,6 @@ exports.leftParticipant = async (req, res) => {
       return res.status(404).json({ error: "Meeting not found" });
     }
 
-    // Check if the participant exists in the meeting
     const participantIndex = miting.participants.findIndex(
       (p) => p.name === participant.userDisplayName
     );
@@ -148,10 +187,8 @@ exports.leftParticipant = async (req, res) => {
       return res.status(404).json({ error: "Participant not found in the meeting" });
     }
 
-    // Remove the participant from the meeting
     miting.participants.splice(participantIndex, 1);
 
-    // Save the updated LiveGame document
     await liveGame.save();
 
     return res.status(200).json({
@@ -160,7 +197,8 @@ exports.leftParticipant = async (req, res) => {
       message: "Participant removed successfully",
     });
   } catch (error) {
-    console.error("Error in leftParticipant:", error.message);
-    return res.status(500).json({ error: error.message });
+    return res
+      .status(constants.status_code.header.server_error)
+      .send({ statusCode: 500, error: error.message, success: false });
   }
 };
