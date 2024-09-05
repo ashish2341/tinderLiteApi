@@ -21,7 +21,23 @@ const userSchema = new mongoose.Schema({
   userType: { type: String, enum:["Player","Coach"],default:"Player" },
   partner: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
   BFFs: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
-  scoreboard: { type: Number, default: 0 },
+  scoreboard: {
+    rank_level: {
+      rank: { type: Number, default: 0 },
+      rank_title: { type: String, default: "" },
+      achievements: [{
+        volume: { type: Number, default: 0 },
+        type: { type: String, default: "" }
+      }]
+    },
+    points: { type: Number, default: 0 },
+    points_history: [{
+      points: { type: Number, default: 0 },
+      date: { type: Date, default: Date.now }
+    }],
+    user_progress: { type: Number, default: 0 },
+    win_rate: { type: Number, default: 0 }
+  },
   interest_in_gender: { type: String },
   follows: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
   followers: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
@@ -30,12 +46,13 @@ const userSchema = new mongoose.Schema({
     coordinates: { type: [Number] },
   },
   token: { type: String },
+  fcmToken: { type: String },
   whatsappNotify: { type: Boolean },
   interests: {
     categories: [{ type: mongoose.Schema.Types.ObjectId, ref: "Category" }],
     subcategories: [{ type: mongoose.Schema.Types.ObjectId, ref: "Category" }],
   },
-  wallet: walletSchema,
+  wallet: [walletSchema],
   instaUrl: { type: String },
   twitterUrl: { type: String },
   occupation: { type: String },

@@ -1,6 +1,7 @@
 const express = require("express");
 
 const router = express.Router();
+const { uploadSingleFile, handleFileUpload } = require("../../helper/imgUpload");
 
 // const { validate } = require('../../helper/customValidation');
 // const auth = require('../middleware/auth');
@@ -14,7 +15,12 @@ const {
   getAllUsers,
   getUserById,
   deleteUser,
+  nearbyUser,
+  addWallet,
+  updateScoreboard
 } = require("../controllers/userController");
+const { getChats } =  require("../controllers/chatsController");
+const { createCommunity, getAllCommunities } = require("../controllers/communityController")
 // const validateRole = require('../middleware/role');
 // const { registerUpdateSchema, passwordSchema } = require('../validators/authValidator');
 
@@ -25,7 +31,12 @@ router.get("/getAllUsers", getAllUsers);
 router.put("/updateUser/:id", updateUsers);
 router.get("/getUserById/:id", getUserById);
 router.delete("/deleteUser/:id", deleteUser);
-
+router.post("/connect-nearby-users", nearbyUser);
+router.post("/addWallet/:id", addWallet);
+router.put("/updateScoreboard/:id", updateScoreboard);
+router.get("/getChats/:id", getChats);
+router.post("/createCommunity", createCommunity);
+router.get("/getAllCommunities", getAllCommunities);
 // router.get('/allUser',auth,validate(getRecordsSchema,'query'),validateRole(["Admin"]),getAllUser)
 // router.get('/user/:id',auth,validate(idSchema,'params'),getUserById)
 // router.get('/userFullDetails/:id',auth,validate(idSchema,'params'),getUserFullDetailsById)

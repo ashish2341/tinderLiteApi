@@ -6,7 +6,6 @@ exports.login = async (req, res) => {
     let phone = req.body.phone;
     let password = req.body.password;
 
-    // console.log(match + "gghjh")
     if (phone == "8840916053" && password == "8840916053") {
       let message = "Login Success";
       let payload = { phone: phone };
@@ -32,21 +31,11 @@ exports.login = async (req, res) => {
       .send({ statusCode: 500, error: error.message, success: false });
   }
 };
+
+
 exports.getDataForAdmin = async (req, res) => {
   try {
-
-    
-
-    const TotalUser = await User.find({ IsDeleted: false })
-    
-
-   
- 
-
-   
-    
-   
-  
+    const TotalUser = await User.find({ IsDeleted: false }); 
 
     return res.status(200).send({
       statusCode: 200,
