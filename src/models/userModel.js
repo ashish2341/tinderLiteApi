@@ -21,6 +21,7 @@ const userSchema = new mongoose.Schema({
   userType: { type: String, enum:["Player","Coach"],default:"Player" },
   partner: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
   BFFs: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+  recentPlayGames:[{ type: mongoose.Schema.Types.ObjectId, ref: "LiveGame" }],
   scoreboard: {
     rank_level: {
       rank: { type: Number, default: 0 },
@@ -41,6 +42,7 @@ const userSchema = new mongoose.Schema({
   interest_in_gender: { type: String },
   follows: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
   followers: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+  likeProfile: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
   location: {
     type: { type: String, enum: ["Point"] },
     coordinates: { type: [Number] },

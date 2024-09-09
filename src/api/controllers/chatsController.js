@@ -1,6 +1,6 @@
 const User = require("../../models/userModel");
 const constants = require("../../helper/constants");
-let Chats = require("../../models/chatsModel");
+const Chats = require("../../models/chatsModel");
 
 exports.getChats = async function (req, res) {
   try {
@@ -38,7 +38,7 @@ exports.getChats = async function (req, res) {
         $lookup: {
           from: "users", 
           localField: "_id",
-          foreignField: "userName",
+          foreignField: "user_name",
           as: "targetInfo"
         }
       },
