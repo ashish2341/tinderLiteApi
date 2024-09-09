@@ -84,6 +84,7 @@ exports.addUserInMeeting = async (req, res) => {
     // }
 
     meeting.participants.push({ userId, name: user.user_name });
+    liveGame.updatedAt = Data.now;
 
     await liveGame.save();
 

@@ -17,7 +17,11 @@ const {
   deleteUser,
   nearbyUser,
   addWallet,
-  updateScoreboard
+  updateScoreboard,
+  getNextProfiles,
+  likeProfile,
+  getHomeData,
+  getPlayData
 } = require("../controllers/userController");
 const { getChats } =  require("../controllers/chatsController");
 const { createCommunity, getAllCommunities } = require("../controllers/communityController")
@@ -37,6 +41,10 @@ router.put("/updateScoreboard/:id", updateScoreboard);
 router.get("/getChats/:id", getChats);
 router.post("/createCommunity", createCommunity);
 router.get("/getAllCommunities", getAllCommunities);
+router.get("/getNextProfiles", getNextProfiles);
+router.post("/likeProfile", likeProfile);
+router.get("/getHomeData/:id", getHomeData);
+router.get("/getPlayData/:id", getPlayData);
 // router.get('/allUser',auth,validate(getRecordsSchema,'query'),validateRole(["Admin"]),getAllUser)
 // router.get('/user/:id',auth,validate(idSchema,'params'),getUserById)
 // router.get('/userFullDetails/:id',auth,validate(idSchema,'params'),getUserFullDetailsById)

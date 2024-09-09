@@ -1,13 +1,15 @@
 const constants = require("../../helper/constants");
 const User = require("../../models/userModel");
+const LiveGame = require("../../models/livegameModel");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const config = require("../../helper/config");
 const moment = require("moment");
 const UserService = require("../services/userService");
 const mongoose = require('mongoose');
-const Community = require("../../models/communityModel");
+const ObjectId = mongoose.Types.ObjectId;
 const cloudinary = require('cloudinary').v2;
+const Chat = require("../../models/chatsModel");
 //import httpStatus from "http-status";
 cloudinary.config({
   cloud_name: "dxjyglb16",
@@ -207,7 +209,8 @@ exports.updateUsers = async (req, res) => {
       whatsappNotify,
       fcmToken,
       BFFs,
-      location
+      location,
+      recentPlayGames
     } = req.body;
 
     const updateUser = {};
@@ -245,7 +248,12 @@ exports.updateUsers = async (req, res) => {
       };
     }
 
-    const updatedUser = await UserService.updateUser(userId, updateUser);
+    let updateQuery = {};
+    if (recentPlayGames && recentPlayGames.length > 0) {
+      updateQuery = { $addToSet: { recentPlayGames: { $each: recentPlayGames } } };
+    }
+
+    const updatedUser = await User.findByIdAndUpdate(userId, { ...updateUser, ...updateQuery }, { new: true });
 
     if (!updatedUser) {
       return res.status(404).json({ success: false, message: "User not found." });
@@ -503,8 +511,281 @@ exports.updateScoreboard = async (req, res) => {
   }
 };
 
+exports.getNextProfiles = async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = 2;
 
+    const skip = (page - 1) * limit;
 
+    const profiles = await User.find()
+      .sort({ created_at: -1 })
+      .skip(skip)
+      .limit(limit);
+
+    if (profiles.length === 0) {
+      return res
+        .status(constants.status_code.header.ok)
+        .send({
+          statusCode: 200,
+          data: [],
+          success: true,
+          message: "No more profiles to fetch."
+        });
+    }
+
+    return res
+      .status(constants.status_code.header.ok)
+      .send({
+        statusCode: 200,
+        data: profiles,
+        success: true,
+        currentPage: page,
+        message: "Profiles fetched successfully."
+      });
+  } catch (error) {
+    return res
+      .status(constants.status_code.header.server_error)
+      .send({
+        statusCode: 500,
+        error: error.message,
+        success: false,
+      });
+  }
+};
+
+exports.likeProfile = async (req, res) => {
+  try {
+    const { userId, targetProfileId, action } = req.body;
+
+    const user = await User.findById(userId);
+    const targetProfile = await User.findById(targetProfileId);
+
+    if (action === 'like') {
+      const isMutualLike = targetProfile.likeProfile.includes(userId);
+
+      if (isMutualLike) {
+        if (!user.likeProfile.includes(targetProfileId)) {
+          user.likeProfile.push(targetProfileId);
+        }
+
+        const newChat = new Chat({
+          sender: user.user_name,
+          target: targetProfile.user_name,
+          content: "You've matched! Start chatting.",
+          timestamp: Date.now(),
+        });
+
+        await user.save();
+        await newChat.save();
+
+        return res
+          .status(constants.status_code.header.ok) 
+          .send({
+            statusCode: constants.status_code.header.ok,
+            success: true,
+            message: "It's a match! Chat has been initiated.",
+          });
+      }
+
+      if (!targetProfile.likeProfile.includes(userId)) {
+        user.likeProfile.push(targetProfileId);
+        await user.save();
+      }
+
+      return res
+        .status(constants.status_code.header.ok)
+        .send({
+          statusCode: constants.status_code.header.ok,
+          success: true,
+          message: "Profile liked.",
+        });
+
+    } else if (action === 'dislike') {
+      return res
+        .status(constants.status_code.header.ok)
+        .send({
+          statusCode: constants.status_code.header.ok,
+          success: true,
+          message: "Profile disliked.",
+        });
+    }
+
+    return res
+      .status(constants.status_code.header.bad_request) 
+      .send({
+        statusCode: constants.status_code.header.bad_request,
+        success: false,
+        message: "Invalid action. Use 'like' or 'dislike'.",
+      });
+
+  } catch (error) {
+    return res
+      .status(constants.status_code.header.server_error)
+      .send({
+        statusCode: constants.status_code.header.server_error,
+        error: error.message,
+        success: false,
+      });
+  }
+};
+
+exports.getHomeData = async (req, res) => {
+  try {
+    const userId = req.params.id;
+
+    const user = await User.findById(userId)
+      .populate({
+        path: 'recentPlayGames', 
+        select: 'gameName updatedAt'
+      })
+      .select('recentPlayGames'); 
+
+    if (!user) {
+      return res
+        .status(constants.status_code.header.not_found)
+        .send({
+          statusCode: constants.status_code.header.not_found,
+          success: false,
+          message: "User not found.",
+        });
+    }
+
+    const recentPlays = user.recentPlayGames;
+
+    const popularProfiles = await User.aggregate([
+      {
+        $project: {
+          full_name: 1,
+          profile_image: 1,
+          likeProfileCount: { $size: { $ifNull: ["$likeProfile", []] } } 
+        }
+      },
+      { $sort: { likeProfileCount: -1 } }, 
+      { $limit: 10 } 
+    ]);
+
+    
+    // const trendingLive = await LiveGame.find({ liveStatus: "active" }) 
+    //   .sort({ updatedAt: -1 }) 
+    //   .limit(10)  
+    //   .select('gameName liveStatus updatedAt'); 
+
+    return res
+      .status(constants.status_code.header.ok)
+      .send({
+        statusCode: 200,
+        success: true,
+        message: "Home data fetched successfully.",
+        data: {
+          recentPlays,
+          popularProfiles,
+          // trendingLive,
+        },
+      });
+
+  } catch (error) {
+    return res
+      .status(constants.status_code.header.server_error)
+      .send({
+        statusCode: 500,
+        error: error.message,
+        success: false,
+      });
+  }
+};
+
+exports.getPlayData = async (req, res) => {
+  try {
+    const userId = req.params.id;
+    
+    // Fetch the current user's profile for their location
+    const user = await User.findById(userId).select('location');
+
+    // Check if user location is valid and has coordinates
+    // if (!user || !user.location || !user.location.coordinates || user.location.coordinates.length !== 2) {
+    //   return res
+    //     .status(constants.status_code.header.not_found)
+    //     .send({
+    //       statusCode: constants.status_code.header.not_found,
+    //       success: false,
+    //       message: "User location not found or invalid.",
+    //     });
+    // }
+
+    const userLocation = user.location.coordinates; // [longitude, latitude]
+
+    // Fetch popular games based on the number of meetings
+    const popularGames = await LiveGame.aggregate([
+      {
+        $project: {
+          gameId: 1,
+          gameName: 1,
+          numberOfMeetings: { $size: { $ifNull: ["$meetings", []] } } // Safely handle missing meetings
+        }
+      },
+      {
+        $sort: { numberOfMeetings: -1 }
+      },
+      { $limit: 4 } 
+    ]);
+
+    // Fetch neighbour profiles based on the user's location
+    const neighbourProfiles = await User.aggregate([
+      {
+        $geoNear: {
+          near: {
+            type: "Point", // Ensure this is exactly "Point"
+            coordinates: userLocation // [longitude, latitude]
+          },
+          distanceField: "distance", 
+          spherical: true, // Perform spherical calculations
+          key: "location" // Use the location field for the geospatial query
+        }
+      },
+      {
+        $match: { 
+          _id: { $ne: new ObjectId(userId) }, // Exclude current user
+          distance: { $lte: 5000 } // Limit to profiles within 5km distance
+        }
+      },
+      {
+        $limit: 10
+      },
+      {
+        $project: {
+          full_name: 1,
+          profile_image: 1,
+          location: 1,
+          distance: 1
+        }
+      }
+    ]);
+
+    // Return the compiled play data
+    return res
+      .status(constants.status_code.header.ok)
+      .send({
+        statusCode: 200,
+        success: true,
+        message: "Play data fetched successfully.",
+        data: {
+          popularGames,
+          neighbourProfiles,
+        },
+      });
+
+  } catch (error) {
+    // Error handling
+    return res
+      .status(constants.status_code.header.server_error)
+      .send({
+        statusCode: 500,
+        error: error.message,
+        success: false,
+      });
+  }
+};
 // exports.getAllUser = async (req, res) => {
 //     try {
 //         const { page, pageSize } = req.query;

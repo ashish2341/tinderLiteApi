@@ -68,6 +68,23 @@ io.on('connection', (socket) => {
     }
   });
 
+  socket.on('join-room', async (data) => {
+    let { sender, target } = data
+    socket.join(sender);
+    let userData = await Chats.find({
+      $or: [
+        { sender, target },
+        { sender: target, target: sender }
+      ]
+    }).sort({ timestamp: 1 })
+
+    if (!userData) {
+      console.log("user data not found");
+    }
+    socket.emit('join-room', userData)
+    console.log(`User ${sender} joined the room`);
+  });
+
   socket.on('disconnect', () => {
     console.log("A user disconnected", socket.id);
   });
