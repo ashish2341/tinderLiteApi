@@ -25,6 +25,7 @@ const {
 } = require("../controllers/userController");
 const { getChats } =  require("../controllers/chatsController");
 const { createCommunity, getAllCommunities } = require("../controllers/communityController")
+const { verifyToken } = require("../middleware/role");
 // const validateRole = require('../middleware/role');
 // const { registerUpdateSchema, passwordSchema } = require('../validators/authValidator');
 
