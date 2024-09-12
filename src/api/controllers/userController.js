@@ -32,9 +32,12 @@ exports.addUser = async (req, res) => {
       //location
     } = req.body;
 
-    const file = req.files.profile_image;    
-
-    const profileImageUrl = await cloudinary.uploader.upload(file.tempFilePath);
+    let ImageUrl;
+    if(req.files && req.files.profile_image){
+      const file = req.files.profile_image;
+      const profileImageUrl = await cloudinary.uploader.upload(file.tempFilePath);
+      ImageUrl = profileImageUrl.secure_url;
+    }    
 
     let userData = new User({
       full_name: full_name,
@@ -45,7 +48,7 @@ exports.addUser = async (req, res) => {
       dob: dob,
       bio: bio,
       role: role,
-      profile_image: profileImageUrl.secure_url, 
+      profile_image: ImageUrl || "", 
       whatsappNotify: whatsappNotify,
       // location: {
       //   type: "Point",
@@ -156,7 +159,6 @@ exports.getAllUsers = async (req, res) => {
     const pageNumber = parseInt(page) || 1;
     const size = parseInt(pageSize) || 10;
     const search = req.query.search || '';
-   
     const searchQuery = {
       deactiveAccount: false,
         $or: [
@@ -173,7 +175,6 @@ exports.getAllUsers = async (req, res) => {
       .skip((pageNumber - 1) * size)
       .limit(size)
       ;
-     console.log("users",users)
 
     const totalCount = await User.countDocuments(searchQuery);
     const totalPages = Math.ceil(totalCount / size);

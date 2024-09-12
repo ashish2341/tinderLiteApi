@@ -2,6 +2,7 @@ const constants = require("../../helper/constants");
 const LiveGame = require("../../models/livegameModel");
 const User = require("../../models/userModel");
 const axios = require("axios");
+const cloudinary = require('cloudinary').v2;
 require("dotenv").config();
 
 const DYTE_API_KEY = process.env.DYTE_API_KEY;
@@ -17,6 +18,12 @@ const DyteAPI = axios.create({
   headers: {
     Authorization: `Basic ${API_HASH}`,
   },
+});
+
+cloudinary.config({
+  cloud_name: "dxjyglb16",
+  api_key: "731694561994395",
+  api_secret: "JevKs_V4azMgBJC0la5bIWJHcZU",
 });
 
 // console.log("DyteAPI", DyteAPI);
@@ -84,7 +91,7 @@ exports.addUserInMeeting = async (req, res) => {
     // }
 
     meeting.participants.push({ userId, name: user.user_name });
-    liveGame.updatedAt = Data.now;
+    liveGame.updatedAt = Date.now();
 
     await liveGame.save();
 
@@ -201,5 +208,80 @@ exports.leftParticipant = async (req, res) => {
     return res
       .status(constants.status_code.header.server_error)
       .send({ statusCode: 500, error: error.message, success: false });
+  }
+};
+
+exports.updateLiveGame = async (req, res) => {
+  try {
+    const { gameId } = req.params; 
+    const {
+      gameName,
+      levels,
+      game_description,
+      how_to_play,
+      rules,
+      top_players,
+      challenges,
+      live_game_details,
+      teams,
+      locked,
+      genre
+    } = req.body;
+
+    const updateFields = {
+      ...(gameName && { gameName }),
+      ...(levels && { levels }),
+      ...(game_description && { game_description }),
+      ...(how_to_play && { how_to_play }),
+      ...(rules && { rules }),
+      ...(top_players && { top_players }),
+      ...(challenges && { challenges }),
+      ...(live_game_details && { live_game_details }),
+      ...(teams && { teams }),
+      ...(locked !== undefined && { locked }),
+      ...(genre && { genre }),
+      updatedAt: Date.now(),
+    };
+
+    if (req.files && req.files.game_images) {
+      const gameImages = await Promise.all(
+        req.files.game_images.map(async (file) => {
+          const uploadResponse = await cloudinary.uploader.upload(file.tempFilePath);
+          return uploadResponse.secure_url; 
+        })
+      );
+      updateFields.game_images = gameImages;
+    }
+
+    if (req.files && req.files.game_bg_image) {
+      const bgImage = req.files.game_bg_image[0];
+      const uploadResponse = await cloudinary.uploader.upload(bgImage.tempFilePath);
+      updateFields.game_bg_image = uploadResponse.secure_url;
+    }
+
+    const updatedGame = await LiveGame.findOneAndUpdate({ gameId }, updateFields, { new: true });
+
+    if (!updatedGame) {
+      return res.status(constants.status_code.header.not_found).send({
+        statusCode: constants.status_code.header.not_found,
+        success: false,
+        message: 'Live game not found.',
+      });
+    }
+
+    return res.status(constants.status_code.header.ok).send({
+      statusCode: constants.status_code.header.ok,
+      success: true,
+      message: 'Live game updated successfully.',
+      data: updatedGame,
+    });
+  } catch (error) {
+    return res
+      .status(constants.status_code.header.server_error)
+      .send({ 
+        statusCode: constants.status_code.header.server_error, 
+        error: error.message, 
+        success: false 
+      });
   }
 };
