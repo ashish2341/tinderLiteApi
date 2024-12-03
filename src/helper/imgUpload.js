@@ -1,26 +1,27 @@
 const multer = require('multer');
-const fs = require('fs');
-// Configure Multer for file uploads
- 
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        // Create uploads directory if it does not exist
-        const uploadDir = 'uploads/';
-        if (!fs.existsSync(uploadDir)) {
-            fs.mkdirSync(uploadDir, { recursive: true });
-        }
-        cb(null, uploadDir);
-    },
-    filename: (req, file, cb) => {
-        cb(null, Date.now() + '-' + file.originalname);
-    }
+
+const storage = multer.memoryStorage(); 
+
+const uploadSingleFile = multer({
+    storage: storage,
+    limits: { fileSize: 100 * 1024 * 1024 },
 });
 
+// Middleware to handle file upload errors
+const handleFileUpload = (uploadFunction) => {
+    return (req, res, next) => {
+        uploadFunction(req, res, function (err) {
+            if (err instanceof multer.MulterError) {
+                return res.status(400).json({ success: false, error: err.message });
+            } else if (err) {
+                return res.status(500).json({ success: false, error: 'An error occurred while uploading the file.' });
+            }
+            next();
+        });
+    };
+};
 
-const uploadSingleFile = multer({ 
-    storage: storage,
-    limits: { fileSize: 100 * 1024 * 1024 }, 
- });
-
- 
-module.exports =  {uploadSingleFile}
+module.exports = {
+    uploadSingleFile,
+    handleFileUpload
+};
