@@ -21,17 +21,17 @@ const {
   getNextProfiles,
   likeProfile,
   getHomeData,
-  getPlayData
+  getPlayData,
 } = require("../controllers/userController");
 const { getChats } =  require("../controllers/chatsController");
-const { createCommunity, getAllCommunities } = require("../controllers/communityController")
+const { createCommunity, getAllCommunities, updateCommunity } = require("../controllers/communityController")
 const { verifyToken } = require("../middleware/role");
 // const validateRole = require('../middleware/role');
 // const { registerUpdateSchema, passwordSchema } = require('../validators/authValidator');
 
 router.post("/addUser", addUser);
 router.post("/login", login);
-router.get("/loginUserData", loginUserData);
+router.get("/loginUserData", verifyToken, loginUserData);
 router.get("/getAllUsers", getAllUsers);
 router.put("/updateUser/:id", updateUsers);
 router.get("/getUserById/:id", getUserById);
@@ -41,10 +41,11 @@ router.post("/addWallet/:id", addWallet);
 router.put("/updateScoreboard/:id", updateScoreboard);
 router.get("/getChats/:id", getChats);
 router.post("/createCommunity", createCommunity);
+router.put("/updateCommunity/:id", updateCommunity);
 router.get("/getAllCommunities", getAllCommunities);
 router.get("/getNextProfiles", getNextProfiles);
 router.post("/likeProfile", likeProfile);
-router.get("/getHomeData/:id", getHomeData);
+router.get("/getHomeData", verifyToken, getHomeData);
 router.get("/getPlayData/:id", getPlayData);
 // router.get('/allUser',auth,validate(getRecordsSchema,'query'),validateRole(["Admin"]),getAllUser)
 // router.get('/user/:id',auth,validate(idSchema,'params'),getUserById)

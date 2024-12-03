@@ -26,18 +26,7 @@ exports.addUser = async (req, res) => {
       phone,
       gender,
       dob,
-      bio,
-      role,
-      whatsappNotify,
-      //location
-    } = req.body;
-
-    let ImageUrl;
-    if(req.files && req.files.profile_image){
-      const file = req.files.profile_image;
-      const profileImageUrl = await cloudinary.uploader.upload(file.tempFilePath);
-      ImageUrl = profileImageUrl.secure_url;
-    }    
+    } = req.body;  
 
     let userData = new User({
       full_name: full_name,
@@ -45,15 +34,7 @@ exports.addUser = async (req, res) => {
       email: email,
       phone: phone,
       gender: gender,
-      dob: dob,
-      bio: bio,
-      role: role,
-      profile_image: ImageUrl || "", 
-      whatsappNotify: whatsappNotify,
-      // location: {
-      //   type: "Point",
-      //   coordinates: location.coordinates
-      // }
+      dob: dob
     });
 
     let payload = { userId: userData._id, phone: userData.phone };
@@ -118,7 +99,7 @@ exports.login = async (req, res, next) => {
 
 exports.loginUserData = async (req, res) => {
   try {
-    let phone = req.body.phone;
+    let phone = req.user.phone;
     //const token = req.body.token;
     const userData = await User.findOne({ phone: phone });
     if (!userData) {
@@ -206,12 +187,18 @@ exports.updateUsers = async (req, res) => {
       gender,
       dob,
       bio,
-      role,
       whatsappNotify,
-      fcmToken,
       BFFs,
       location,
-      recentPlayGames
+      recentPlayGames,
+      occupation,
+      specialization,
+      experience,
+      client_reviews,
+      availability,
+      pricing,
+      deactiveAccount,
+      blockByAdmin
     } = req.body;
 
     const updateUser = {};
@@ -238,14 +225,22 @@ exports.updateUsers = async (req, res) => {
     if (gender) updateUser.gender = gender;
     if (dob) updateUser.dob = dob;
     if (bio) updateUser.bio = bio;
-    if (role) updateUser.role = role;
     if (whatsappNotify !== undefined) updateUser.whatsappNotify = whatsappNotify;
-    if (fcmToken) updateUser.fcmToken = fcmToken;
+    if (occupation) updateUser.occupation = occupation;
+    if (specialization) updateUser.specialization = specialization;
+    if (experience) updateUser.experience = experience;
+    if (client_reviews) updateUser.client_reviews = client_reviews;
+    if (availability) updateUser.availability = availability;
+    if (pricing) updateUser.pricing = pricing;
     if (BFFs) updateUser.BFFs = BFFs;
-    if (location) {
+    if (deactiveAccount) updateUser.deactiveAccount = deactiveAccount;
+    if (blockByAdmin) updateUser.blockByAdmin = blockByAdmin;
+    
+    if (location && location.coordinates) {
       updateUser.location = {
         type: "Point",
-        coordinates: location.coordinates
+        coordinates: location.coordinates,
+        city: location.city
       };
     }
 
@@ -633,7 +628,7 @@ exports.likeProfile = async (req, res) => {
 
 exports.getHomeData = async (req, res) => {
   try {
-    const userId = req.params.id;
+    const userId = req.user.userId;
 
     const user = await User.findById(userId)
       .populate({
@@ -787,6 +782,7 @@ exports.getPlayData = async (req, res) => {
       });
   }
 };
+
 // exports.getAllUser = async (req, res) => {
 //     try {
 //         const { page, pageSize } = req.query;

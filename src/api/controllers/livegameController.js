@@ -171,7 +171,6 @@ exports.getGameById = async (req, res) => {
 exports.leftParticipant = async (req, res) => {
   try {
     const { participant, meeting } = req.body;
-    console.log("req.body",req.body);
 
     const liveGame = await LiveGame.findOne({ "meetings.meetingId": meeting.id });
 
@@ -244,17 +243,21 @@ exports.updateLiveGame = async (req, res) => {
     };
 
     if (req.files && req.files.game_images) {
-      const gameImages = await Promise.all(
-        req.files.game_images.map(async (file) => {
+      const gameImages = Array.isArray(req.files.game_images)
+        ? req.files.game_images
+        : [req.files.game_images];
+
+      const uploadedImages = await Promise.all(
+        gameImages.map(async (file) => {
           const uploadResponse = await cloudinary.uploader.upload(file.tempFilePath);
-          return uploadResponse.secure_url; 
+          return uploadResponse.secure_url;
         })
       );
-      updateFields.game_images = gameImages;
+      updateFields.game_images = uploadedImages;
     }
 
     if (req.files && req.files.game_bg_image) {
-      const bgImage = req.files.game_bg_image[0];
+      const bgImage = req.files.game_bg_image;
       const uploadResponse = await cloudinary.uploader.upload(bgImage.tempFilePath);
       updateFields.game_bg_image = uploadResponse.secure_url;
     }
