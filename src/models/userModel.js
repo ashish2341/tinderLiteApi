@@ -20,6 +20,7 @@ const userSchema = new mongoose.Schema({
   bio: { type: String },
   userType: { type: String, enum:["Player","Coach"],default:"Player" },
   partner: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+  relationship_status: { type: String },
   BFFs: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
   recentPlayGames:[{ type: mongoose.Schema.Types.ObjectId, ref: "LiveGame" }],
   scoreboard: {
@@ -40,12 +41,13 @@ const userSchema = new mongoose.Schema({
     win_rate: { type: Number, default: 0 }
   },
   interest_in_gender: { type: String },
-  follows: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
-  followers: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+  // follows: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+  // followers: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
   likeProfile: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
   location: {
     type: { type: String, enum: ["Point"] },
     coordinates: { type: [Number] },
+    city: { type: String }
   },
   token: { type: String },
   fcmToken: { type: String },
@@ -55,9 +57,18 @@ const userSchema = new mongoose.Schema({
     subcategories: [{ type: mongoose.Schema.Types.ObjectId, ref: "Category" }],
   },
   wallet: [walletSchema],
-  instaUrl: { type: String },
-  twitterUrl: { type: String },
+  favourite_games: [{ type: mongoose.Schema.Types.ObjectId, ref: "LiveGame" }],
+  social_links: [{
+    url: { type: String },
+    app_name: { type: String }
+  }],
   occupation: { type: String },
+  specialization: { type: String },
+  experience: { type: Number, default: 0 },
+  client_reviews: [{ type: String }],
+  availability: { type: String },
+  pricing: { type: Number },
+  unlocked_games: [{ type: mongoose.Schema.Types.ObjectId, ref: "LiveGame" }],
   created_at: { type: Date, default: Date.now },
   updated_at: { type: Date, default: Date.now },
 });

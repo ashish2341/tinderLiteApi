@@ -49,7 +49,8 @@ exports.getAllCommunities = async (req, res) => {
     const communities = await Community.find()
       .sort({ [sortBy]: order })
       .skip(skip)
-      .limit(limit);
+      .limit(limit)
+      .populate('createdBy', 'full_name email profile_image');
 
     const totalCommunities = await Community.countDocuments();
 
@@ -61,6 +62,55 @@ exports.getAllCommunities = async (req, res) => {
       currentPage: page,
       totalPages: Math.ceil(totalCommunities / limit),
       message: "Communities fetched successfully.",
+    });
+  } catch (error) {
+    return res
+      .status(constants.status_code.header.server_error)
+      .send({ statusCode: 500, error: error.message, success: false });
+  }
+};
+
+exports.updateCommunity = async (req, res) => {
+  try {
+    const communityId = req.params.id;
+    const { name, description, imageUrl, likes, commentText, userId } = req.body;
+
+    const updateFields = {
+      ...(name && { name }),
+      ...(description && { description }),
+      ...(imageUrl && { imageUrl }),
+      updatedAt: Date.now(),
+    };
+
+    if (likes) {
+      updateFields.$addToSet = { likes: likes };
+    }
+
+    if (commentText && userId) {
+      updateFields.$push = {
+        comments: {
+          userId,
+          commentText,
+          createdAt: Date.now(),
+        },
+      };
+    }
+
+    const updatedCommunity = await Community.findByIdAndUpdate(communityId, updateFields, { new: true });
+
+    if (!updatedCommunity) {
+      return res.status(constants.status_code.header.server_error).send({
+        statusCode: 404,
+        success: false,
+        message: 'Community not found.',
+      });
+    }
+
+    return res.status(constants.status_code.header.ok).send({
+      statusCode: 200,
+      success: true,
+      message: 'Community updated successfully.',
+      data: updatedCommunity,
     });
   } catch (error) {
     return res
