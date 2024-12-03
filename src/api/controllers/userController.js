@@ -56,10 +56,12 @@ exports.addUser = async (req, res) => {
 
 exports.login = async (req, res, next) => {
   try {
-    const { phone } = req.body;
+    const { phone, email } = req.body;
     //let password = req.body.password;
     //const match = await bcrypt.compare(password, userData.password)
-    const userData = await User.findOne({ phone: phone });
+    const userData = await User.findOne({
+      $or: [{ phone: phone }, { email: email }]
+    });
     if (!userData) {
       throw new Error("User not found");
     } else if (userData.blockByAdmin == true) {
