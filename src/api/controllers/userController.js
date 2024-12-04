@@ -56,11 +56,11 @@ exports.addUser = async (req, res) => {
 
 exports.login = async (req, res, next) => {
   try {
-    const { phone, email } = req.body;
+    const { phoneOremail } = req.body;
     //let password = req.body.password;
     //const match = await bcrypt.compare(password, userData.password)
     const userData = await User.findOne({
-      $or: [{ phone: phone }, { email: email }]
+      $or: [{ phone: phoneOremail }, { email: phoneOremail }]
     });
     if (!userData) {
       throw new Error("User not found");
