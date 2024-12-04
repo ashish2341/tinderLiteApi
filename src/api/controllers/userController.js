@@ -200,7 +200,8 @@ exports.updateUsers = async (req, res) => {
       availability,
       pricing,
       deactiveAccount,
-      blockByAdmin
+      blockByAdmin,
+      interest_in_gender
     } = req.body;
 
     const updateUser = {};
@@ -237,6 +238,7 @@ exports.updateUsers = async (req, res) => {
     if (BFFs) updateUser.BFFs = BFFs;
     if (deactiveAccount) updateUser.deactiveAccount = deactiveAccount;
     if (blockByAdmin) updateUser.blockByAdmin = blockByAdmin;
+    if (interest_in_gender) updateUser.interest_in_gender = interest_in_gender;
     
     if (location && location.coordinates) {
       updateUser.location = {
