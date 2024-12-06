@@ -53,7 +53,7 @@ module.exports = {
         header: {
             ok: 200,
             unauthorized: 200,
-            server_error: 200
+            server_error: 500
         },
         body: {
             ok: 200,
