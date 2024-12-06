@@ -41,8 +41,8 @@ const userSchema = new mongoose.Schema({
     win_rate: { type: Number, default: 0 }
   },
   interest_in_gender: { type: String },
-  // follows: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
-  // followers: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+  follows: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+  followers: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
   likeProfile: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
   location: {
     type: { type: String, enum: ["Point"] },

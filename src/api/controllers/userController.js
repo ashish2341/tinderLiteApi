@@ -637,7 +637,7 @@ exports.getHomeData = async (req, res) => {
     const user = await User.findById(userId)
       .populate({
         path: 'recentPlayGames', 
-        select: 'gameName updatedAt'
+        select: 'gameName gameId updatedAt'
       })
       .select('recentPlayGames'); 
 
@@ -784,6 +784,151 @@ exports.getPlayData = async (req, res) => {
         error: error.message,
         success: false,
       });
+  }
+};
+
+exports.getFollowersAndFollowing = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+
+    const user = await User.findById(userId).select("follows followers");
+    if (!user) {
+      return res
+        .status(constants.status_code.header.not_found)
+        .send({
+          statusCode: constants.status_code.header.not_found,
+          success: false,
+          message: "User not found.",
+        });
+    }
+
+    const followers = await User.find({ _id: { $in: user.followers } }).select(
+      "full_name user_name profile_image"
+    );
+
+    const following = await User.find({ _id: { $in: user.follows } }).select(
+      "full_name user_name profile_image"
+    );
+
+    return res.status(constants.status_code.header.ok).send({
+      statusCode: constants.status_code.header.ok,
+      success: true,
+      message: "Followers and Following fetched successfully.",
+      data: {
+        followers,
+        following,
+      },
+    });
+  } catch (error) {
+    return res
+      .status(constants.status_code.header.server_error)
+      .send({
+        statusCode: constants.status_code.header.server_error,
+        error: error.message,
+        success: false,
+      });
+  }
+};
+
+exports.getPopularProfiles = async (req, res) => {
+  try {
+    const { page = 1, limit = 10 } = req.query;
+
+    const skip = (page - 1) * limit;
+
+    const popularProfiles = await User.aggregate([
+      {
+        $project: {
+          full_name: 1,
+          user_name: 1,
+          profile_image: 1,
+          likeCount: { $size: { $ifNull: ["$likeProfile", []] } },
+        },
+      },
+      { $sort: { likeCount: -1 } },
+      { $skip: skip },
+      { $limit: parseInt(limit) },
+    ]);
+
+    if (popularProfiles.length === 0) {
+      return res.status(constants.status_code.header.not_found).send({
+        statusCode: constants.status_code.header.not_found,
+        success: false,
+        message: "No popular profiles found.",
+      });
+    }
+
+    return res.status(constants.status_code.header.ok).send({
+      statusCode: constants.status_code.header.ok,
+      success: true,
+      message: "Popular profiles fetched successfully.",
+      data: popularProfiles,
+    });
+  } catch (error) {
+    return res.status(constants.status_code.header.server_error).send({
+      statusCode: constants.status_code.header.server_error,
+      error: error.message,
+      success: false,
+    });
+  }
+};
+
+exports.followUnfollow = async (req, res) => {
+  try {
+    const { targetUserId, action } = req.body;
+    const userId = req.user.userId;
+    
+    const user = await User.findById(userId);
+    const targetUser = await User.findById(targetUserId);
+
+    if (!user || !targetUser) {
+      return res.status(constants.status_code.header.not_found).send({
+        statusCode: 404,
+        success: false,
+        message: "User or target user not found.",
+      });
+    }
+
+    if (action === "follow") {
+      if (!user.follows.includes(targetUserId)) {
+        user.follows.push(targetUserId);
+        await user.save();
+      }
+      if (!targetUser.followers.includes(userId)) {
+        targetUser.followers.push(userId);
+        await targetUser.save();
+      }
+
+      return res.status(constants.status_code.header.ok).send({
+        statusCode: 200,
+        success: true,
+        message: `You are now following ${targetUser.full_name}.`,
+      });
+    } else if (action === "unfollow") {
+      user.follows = user.follows.filter((id) => id.toString() !== targetUserId);
+      await user.save();
+
+      targetUser.followers = targetUser.followers.filter((id) => id.toString() !== userId);
+      await targetUser.save();
+
+      return res.status(constants.status_code.header.ok).send({
+        statusCode: 200,
+        success: true,
+        message: `You have unfollowed ${targetUser.full_name}.`,
+      });
+    } else {
+      return res.status(constants.status_code.header.bad_request).send({
+        statusCode: 400,
+        success: false,
+        message: "Invalid action. Use 'follow' or 'unfollow'.",
+      });
+    }
+  } catch (error) {
+    return res.status(constants.status_code.header.server_error).send({
+      statusCode: 500,
+      error: error.message,
+      success: false,
+    });
   }
 };
 

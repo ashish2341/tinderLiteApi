@@ -265,8 +265,8 @@ exports.updateLiveGame = async (req, res) => {
     const updatedGame = await LiveGame.findOneAndUpdate({ gameId }, updateFields, { new: true });
 
     if (!updatedGame) {
-      return res.status(constants.status_code.header.not_found).send({
-        statusCode: constants.status_code.header.not_found,
+      return res.status(constants.status_code.header.server_error).send({
+        statusCode: constants.status_code.header.server_error,
         success: false,
         message: 'Live game not found.',
       });

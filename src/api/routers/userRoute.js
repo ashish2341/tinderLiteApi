@@ -22,6 +22,9 @@ const {
   likeProfile,
   getHomeData,
   getPlayData,
+  getFollowersAndFollowing,
+  getPopularProfiles,
+  followUnfollow
 } = require("../controllers/userController");
 const { getChats } =  require("../controllers/chatsController");
 const { createCommunity, getAllCommunities, updateCommunity } = require("../controllers/communityController")
@@ -47,6 +50,9 @@ router.get("/getNextProfiles", getNextProfiles);
 router.post("/likeProfile", likeProfile);
 router.get("/getHomeData", verifyToken, getHomeData);
 router.get("/getPlayData/:id", getPlayData);
+router.get("/getFollowersAndFollowing", verifyToken, getFollowersAndFollowing);
+router.get("/getPopularProfiles", getPopularProfiles);
+router.post("/followUnfollow", verifyToken, followUnfollow);
 // router.get('/allUser',auth,validate(getRecordsSchema,'query'),validateRole(["Admin"]),getAllUser)
 // router.get('/user/:id',auth,validate(idSchema,'params'),getUserById)
 // router.get('/userFullDetails/:id',auth,validate(idSchema,'params'),getUserFullDetailsById)
