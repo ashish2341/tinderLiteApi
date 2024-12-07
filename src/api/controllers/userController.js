@@ -787,11 +787,11 @@ exports.getPlayData = async (req, res) => {
   }
 };
 
-exports.getFollowersAndFollowing = async (req, res) => {
+exports.getFollowers = async (req, res) => {
   try {
     const userId = req.user.userId;
 
-    const user = await User.findById(userId).select("follows followers");
+    const user = await User.findById(userId).select("followers");
     if (!user) {
       return res
         .status(constants.status_code.header.not_found)
@@ -806,6 +806,40 @@ exports.getFollowersAndFollowing = async (req, res) => {
       "full_name user_name profile_image"
     );
 
+    return res.status(constants.status_code.header.ok).send({
+      statusCode: constants.status_code.header.ok,
+      success: true,
+      message: "Followers fetched successfully.",
+      data: {
+        followers
+      },
+    });
+  } catch (error) {
+    return res
+      .status(constants.status_code.header.server_error)
+      .send({
+        statusCode: constants.status_code.header.server_error,
+        error: error.message,
+        success: false,
+      });
+  }
+};
+
+exports.getFollowing = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+
+    const user = await User.findById(userId).select("follows");
+    if (!user) {
+      return res
+        .status(constants.status_code.header.not_found)
+        .send({
+          statusCode: constants.status_code.header.not_found,
+          success: false,
+          message: "User not found.",
+        });
+    }
+
     const following = await User.find({ _id: { $in: user.follows } }).select(
       "full_name user_name profile_image"
     );
@@ -813,10 +847,9 @@ exports.getFollowersAndFollowing = async (req, res) => {
     return res.status(constants.status_code.header.ok).send({
       statusCode: constants.status_code.header.ok,
       success: true,
-      message: "Followers and Following fetched successfully.",
+      message: "Following fetched successfully.",
       data: {
-        followers,
-        following,
+        following
       },
     });
   } catch (error) {
