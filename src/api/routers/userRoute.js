@@ -22,7 +22,8 @@ const {
   likeProfile,
   getHomeData,
   getPlayData,
-  getFollowersAndFollowing,
+  getFollowers,
+  getFollowing,
   getPopularProfiles,
   followUnfollow
 } = require("../controllers/userController");
@@ -50,9 +51,11 @@ router.get("/getNextProfiles", getNextProfiles);
 router.post("/likeProfile", likeProfile);
 router.get("/getHomeData", verifyToken, getHomeData);
 router.get("/getPlayData/:id", getPlayData);
-router.get("/getFollowersAndFollowing", verifyToken, getFollowersAndFollowing);
+router.get("/getFollowers", verifyToken, getFollowers);
+router.get("/getFollowing", verifyToken, getFollowing);
 router.get("/getPopularProfiles", getPopularProfiles);
 router.post("/followUnfollow", verifyToken, followUnfollow);
+
 // router.get('/allUser',auth,validate(getRecordsSchema,'query'),validateRole(["Admin"]),getAllUser)
 // router.get('/user/:id',auth,validate(idSchema,'params'),getUserById)
 // router.get('/userFullDetails/:id',auth,validate(idSchema,'params'),getUserFullDetailsById)
