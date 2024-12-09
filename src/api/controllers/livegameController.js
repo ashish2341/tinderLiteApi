@@ -97,8 +97,7 @@ exports.addUserInMeeting = async (req, res) => {
 
     return res.status(constants.status_code.header.ok).send({
       statusCode: 200,
-      meetingId: meeting.meetingId,
-      data: liveGame,
+      data: {meetingId: meeting.meetingId, liveGame},
       success: true,
       message: "User added to the meeting successfully",
     });
