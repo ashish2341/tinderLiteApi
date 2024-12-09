@@ -244,7 +244,10 @@ exports.updateUsers = async (req, res) => {
       updateUser.location = {
         type: "Point",
         coordinates: location.coordinates,
-        city: location.city
+        city: location.city,
+        state: location.state,
+        country: location.country,
+        pinCode: location.pinCode
       };
     }
 
@@ -637,7 +640,7 @@ exports.getHomeData = async (req, res) => {
     const user = await User.findById(userId)
       .populate({
         path: 'recentPlayGames', 
-        select: 'gameName gameId updatedAt'
+        select: 'gameName gameId updatedAt game_images'
       })
       .select('recentPlayGames'); 
 

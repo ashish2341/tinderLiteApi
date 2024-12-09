@@ -47,7 +47,10 @@ const userSchema = new mongoose.Schema({
   location: {
     type: { type: String, enum: ["Point"] },
     coordinates: { type: [Number] },
-    city: { type: String }
+    city: { type: String },
+    state: { type: String },
+    country: { type: String },
+    pinCode: { type: String }
   },
   token: { type: String },
   fcmToken: { type: String },
