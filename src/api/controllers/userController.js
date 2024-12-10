@@ -640,7 +640,7 @@ exports.getHomeData = async (req, res) => {
     const user = await User.findById(userId)
       .populate({
         path: 'recentPlayGames', 
-        select: 'gameName gameId updatedAt game_images'
+        select: 'gameName gameId updatedAt game_bg_image'
       })
       .select('recentPlayGames'); 
 
