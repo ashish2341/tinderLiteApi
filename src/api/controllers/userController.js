@@ -968,6 +968,27 @@ exports.followUnfollow = async (req, res) => {
   }
 };
 
+exports.getWalletTransactions = async (req, res) => {
+  try {
+    const userId = req.params.id;
+
+    const user = await User.findById(userId).select("wallet");
+
+    return res.status(constants.status_code.header.ok).send({
+      statusCode: 200,
+      success: true,
+      message: "Wallet transactions fetched successfully.",
+      data: user.wallet,
+    });
+  } catch (error) {
+    return res.status(constants.status_code.header.server_error).send({
+      statusCode: 500,
+      error: error.message,
+      success: false,
+    });
+  }
+};
+
 // exports.getAllUser = async (req, res) => {
 //     try {
 //         const { page, pageSize } = req.query;

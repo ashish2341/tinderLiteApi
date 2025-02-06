@@ -25,10 +25,11 @@ const {
   getFollowers,
   getFollowing,
   getPopularProfiles,
-  followUnfollow
+  followUnfollow,
+  getWalletTransactions
 } = require("../controllers/userController");
 const { getChats } =  require("../controllers/chatsController");
-const { createCommunity, getAllCommunities, updateCommunity } = require("../controllers/communityController")
+const { createCommunity, getAllCommunities, updateCommunity, getAllComments, getAllLikes } = require("../controllers/communityController")
 const { verifyToken } = require("../middleware/role");
 // const validateRole = require('../middleware/role');
 // const { registerUpdateSchema, passwordSchema } = require('../validators/authValidator');
@@ -55,6 +56,9 @@ router.get("/getFollowers", verifyToken, getFollowers);
 router.get("/getFollowing", verifyToken, getFollowing);
 router.get("/getPopularProfiles", getPopularProfiles);
 router.post("/followUnfollow", verifyToken, followUnfollow);
+router.get("/getWalletTransactions/:id", getWalletTransactions);
+router.get("/getAllComments/:id", getAllComments);
+router.get("/getAllLikes/:id", getAllLikes);
 
 // router.get('/allUser',auth,validate(getRecordsSchema,'query'),validateRole(["Admin"]),getAllUser)
 // router.get('/user/:id',auth,validate(idSchema,'params'),getUserById)

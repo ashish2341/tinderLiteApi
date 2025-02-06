@@ -50,7 +50,7 @@ exports.getAllCommunities = async (req, res) => {
       .sort({ [sortBy]: order })
       .skip(skip)
       .limit(limit)
-      .populate('createdBy', 'full_name email profile_image');
+      .populate("createdBy", "full_name email profile_image");
 
     const totalCommunities = await Community.countDocuments();
 
@@ -73,7 +73,8 @@ exports.getAllCommunities = async (req, res) => {
 exports.updateCommunity = async (req, res) => {
   try {
     const communityId = req.params.id;
-    const { name, description, imageUrl, likes, commentText, userId } = req.body;
+    const { name, description, imageUrl, likes, commentText, userId } =
+      req.body;
 
     const updateFields = {
       ...(name && { name }),
@@ -96,21 +97,69 @@ exports.updateCommunity = async (req, res) => {
       };
     }
 
-    const updatedCommunity = await Community.findByIdAndUpdate(communityId, updateFields, { new: true });
+    const updatedCommunity = await Community.findByIdAndUpdate(
+      communityId,
+      updateFields,
+      { new: true }
+    );
 
     if (!updatedCommunity) {
       return res.status(constants.status_code.header.server_error).send({
         statusCode: 404,
         success: false,
-        message: 'Community not found.',
+        message: "Community not found.",
       });
     }
 
     return res.status(constants.status_code.header.ok).send({
       statusCode: 200,
       success: true,
-      message: 'Community updated successfully.',
+      message: "Community updated successfully.",
       data: updatedCommunity,
+    });
+  } catch (error) {
+    return res
+      .status(constants.status_code.header.server_error)
+      .send({ statusCode: 500, error: error.message, success: false });
+  }
+};
+
+exports.getAllComments = async (req, res) => {
+  try {
+    const communityId = req.params.id;
+
+    const community = await Community.findById(communityId).populate({
+      path: "comments.userId",
+      select: "full_name user_name profile_image",
+    });
+
+    return res.status(constants.status_code.header.ok).send({
+      statusCode: 200,
+      success: true,
+      message: "Comments fetched successfully.",
+      data: community.comments,
+    });
+  } catch (error) {
+    return res
+      .status(constants.status_code.header.server_error)
+      .send({ statusCode: 500, error: error.message, success: false });
+  }
+};
+
+exports.getAllLikes = async (req, res) => {
+  try {
+    const communityId = req.params.id;
+
+    const community = await Community.findById(communityId).populate({
+      path: "likes",
+      select: "full_name user_name profile_image",
+    });
+
+    return res.status(constants.status_code.header.ok).send({
+      statusCode: 200,
+      success: true,
+      message: "Likes fetched successfully.",
+      data: community.likes,
     });
   } catch (error) {
     return res
