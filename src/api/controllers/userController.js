@@ -6,10 +6,11 @@ const jwt = require("jsonwebtoken");
 const config = require("../../helper/config");
 const moment = require("moment");
 const UserService = require("../services/userService");
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 const ObjectId = mongoose.Types.ObjectId;
-const cloudinary = require('cloudinary').v2;
+const cloudinary = require("cloudinary").v2;
 const Chat = require("../../models/chatsModel");
+const sendMail = require("../../helper/sendMail")
 //import httpStatus from "http-status";
 cloudinary.config({
   cloud_name: "dxjyglb16",
@@ -19,14 +20,7 @@ cloudinary.config({
 
 exports.addUser = async (req, res) => {
   try {
-    const { 
-      full_name,
-      user_name,
-      email,
-      phone,
-      gender,
-      dob,
-    } = req.body;  
+    const { full_name, user_name, email, phone, gender, dob } = req.body;
 
     let userData = new User({
       full_name: full_name,
@@ -34,7 +28,7 @@ exports.addUser = async (req, res) => {
       email: email,
       phone: phone,
       gender: gender,
-      dob: dob
+      dob: dob,
     });
 
     let payload = { userId: userData._id, phone: userData.phone };
@@ -44,9 +38,12 @@ exports.addUser = async (req, res) => {
 
     let result = await userData.save();
 
-    return res
-      .status(constants.status_code.header.ok)
-      .send({ statusCode: 200, data: result, success: true, message: "signup success" });
+    return res.status(constants.status_code.header.ok).send({
+      statusCode: 200,
+      data: result,
+      success: true,
+      message: "signup success",
+    });
   } catch (error) {
     return res
       .status(constants.status_code.header.server_error)
@@ -60,7 +57,7 @@ exports.login = async (req, res, next) => {
     //let password = req.body.password;
     //const match = await bcrypt.compare(password, userData.password)
     const userData = await User.findOne({
-      $or: [{ phone: phoneOremail }, { email: phoneOremail }]
+      $or: [{ phone: phoneOremail }, { email: phoneOremail }],
     });
     if (!userData) {
       throw new Error("User not found");
@@ -83,14 +80,12 @@ exports.login = async (req, res, next) => {
       };
       const userId = userData._id;
       const result = await UserService.updateUser(userId, updateUser);
-      return res
-        .status(constants.status_code.header.ok)
-        .send({
-          statusCode: 200,
-          data: result,
-          success: true,
-          message: message,
-        });
+      return res.status(constants.status_code.header.ok).send({
+        statusCode: 200,
+        data: result,
+        success: true,
+        message: message,
+      });
     }
   } catch (error) {
     return res
@@ -121,14 +116,12 @@ exports.loginUserData = async (req, res) => {
     //   };
     // }
     let message = "Current User Data";
-    return res
-      .status(constants.status_code.header.ok)
-      .send({
-        statusCode: 200,
-        data: userData,
-        success: true,
-        message: message,
-      });
+    return res.status(constants.status_code.header.ok).send({
+      statusCode: 200,
+      data: userData,
+      success: true,
+      message: message,
+    });
   } catch (error) {
     return res
       .status(constants.status_code.header.server_error)
@@ -141,24 +134,20 @@ exports.getAllUsers = async (req, res) => {
     const { page, pageSize } = req.query;
     const pageNumber = parseInt(page) || 1;
     const size = parseInt(pageSize) || 10;
-    const search = req.query.search || '';
+    const search = req.query.search || "";
     const searchQuery = {
       deactiveAccount: false,
-        $or: [
-            { full_name: { $regex: search, $options: 'i' } }, 
-        ]
+      $or: [{ full_name: { $regex: search, $options: "i" } }],
     };
-  
-   if(req.query.type){
-    searchQuery.userType = req.query.type
-   }
+
+    if (req.query.type) {
+      searchQuery.userType = req.query.type;
+    }
     const users = await User.find(searchQuery)
       // .populate('Roles')
       .sort({ CreatedDate: -1 })
       .skip((pageNumber - 1) * size)
-      .limit(size)
-      ;
-
+      .limit(size);
     const totalCount = await User.countDocuments(searchQuery);
     const totalPages = Math.ceil(totalCount / size);
 
@@ -166,7 +155,7 @@ exports.getAllUsers = async (req, res) => {
       statusCode: 200,
       data: users,
       success: true,
-      totalCount: totalCount>0 ? totalCount-1:totalCount,
+      totalCount: totalCount > 0 ? totalCount - 1 : totalCount,
       count: users.length,
       pageNumber: pageNumber,
       totalPages: totalPages,
@@ -201,15 +190,21 @@ exports.updateUsers = async (req, res) => {
       pricing,
       deactiveAccount,
       blockByAdmin,
-      interest_in_gender
+      interest_in_gender,
     } = req.body;
 
     const updateUser = {};
 
     if (user_name) {
-      const existingUser = await User.findOne({ user_name, _id: { $ne: userId } });
+      const existingUser = await User.findOne({
+        user_name,
+        _id: { $ne: userId },
+      });
       if (existingUser) {
-        return res.status(400).json({ success: false, message: `Username ${user_name} already exists.` });
+        return res.status(400).json({
+          success: false,
+          message: `Username ${user_name} already exists.`,
+        });
       }
       updateUser.user_name = user_name;
     }
@@ -228,7 +223,8 @@ exports.updateUsers = async (req, res) => {
     if (gender) updateUser.gender = gender;
     if (dob) updateUser.dob = dob;
     if (bio) updateUser.bio = bio;
-    if (whatsappNotify !== undefined) updateUser.whatsappNotify = whatsappNotify;
+    if (whatsappNotify !== undefined)
+      updateUser.whatsappNotify = whatsappNotify;
     if (occupation) updateUser.occupation = occupation;
     if (specialization) updateUser.specialization = specialization;
     if (experience) updateUser.experience = experience;
@@ -239,7 +235,7 @@ exports.updateUsers = async (req, res) => {
     if (deactiveAccount) updateUser.deactiveAccount = deactiveAccount;
     if (blockByAdmin) updateUser.blockByAdmin = blockByAdmin;
     if (interest_in_gender) updateUser.interest_in_gender = interest_in_gender;
-    
+
     if (location && location.coordinates) {
       updateUser.location = {
         type: "Point",
@@ -247,33 +243,39 @@ exports.updateUsers = async (req, res) => {
         city: location.city,
         state: location.state,
         country: location.country,
-        pinCode: location.pinCode
+        pinCode: location.pinCode,
       };
     }
 
     let updateQuery = {};
     if (recentPlayGames && recentPlayGames.length > 0) {
-      updateQuery = { $addToSet: { recentPlayGames: { $each: recentPlayGames } } };
+      updateQuery = {
+        $addToSet: { recentPlayGames: { $each: recentPlayGames } },
+      };
     }
 
-    const updatedUser = await User.findByIdAndUpdate(userId, { ...updateUser, ...updateQuery }, { new: true });
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { ...updateUser, ...updateQuery },
+      { new: true }
+    );
 
     if (!updatedUser) {
-      return res.status(404).json({ success: false, message: "User not found." });
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found." });
     }
     //clear cache
     // if (cache.has(userId)) {
     //   cache.del(userId);
     // }
     let message = "User Updated Successfully";
-    return res
-      .status(constants.status_code.header.ok)
-      .send({
-        statusCode: 200,
-        data: updatedUser,
-        success: true,
-        message: message,
-      });
+    return res.status(constants.status_code.header.ok).send({
+      statusCode: 200,
+      data: updatedUser,
+      success: true,
+      message: message,
+    });
   } catch (error) {
     return res
       .status(constants.status_code.header.server_error)
@@ -286,7 +288,7 @@ exports.getUserById = async (req, res) => {
     let userId = req.params.id;
     //const token = req.body.token;
     const userData = await User.findById(userId);
-    
+
     // if (token !== userData.token) {
     //   throw {
     //     code: httpStatus.UNAUTHORIZED,
@@ -294,14 +296,12 @@ exports.getUserById = async (req, res) => {
     //   };
     // }
     let message = "Current User Data";
-    return res
-      .status(constants.status_code.header.ok)
-      .send({
-        statusCode: 200,
-        data: userData,
-        success: true,
-        message: message,
-      });
+    return res.status(constants.status_code.header.ok).send({
+      statusCode: 200,
+      data: userData,
+      success: true,
+      message: message,
+    });
   } catch (error) {
     return res
       .status(constants.status_code.header.server_error)
@@ -312,25 +312,25 @@ exports.getUserById = async (req, res) => {
 exports.deleteUser = async function (req, res) {
   try {
     const userId = req.params.id;
-    
+
     let result = await User.findByIdAndDelete(userId);
     if (!result) {
-      return res
-      .status(constants.status_code.header.server_error)
-      .send({ statusCode: 500, error: "User Not Deleted..!", success: false });
+      return res.status(constants.status_code.header.server_error).send({
+        statusCode: 500,
+        error: "User Not Deleted..!",
+        success: false,
+      });
     }
     //clear cache
     // if (cache.has(userId)) {
     //   cache.del(userId);
     // }
-    return res
-      .status(constants.status_code.header.ok)
-      .send({
-        statusCode: 200,
-        data: {},
-        success: true,
-        message: "User deleted successfully",
-      });
+    return res.status(constants.status_code.header.ok).send({
+      statusCode: 200,
+      data: {},
+      success: true,
+      message: "User deleted successfully",
+    });
   } catch (error) {
     return res
       .status(constants.status_code.header.server_error)
@@ -388,44 +388,50 @@ exports.nearbyUser = async function (req, res) {
 
 exports.addWallet = async (req, res) => {
   try {
-    const userId  = req.params.id;
-    const { amount, currency, transaction_type, payment_method, status } = req.body;
+    const userId = req.params.id;
+    const { amount, currency, transaction_type, payment_method, status } =
+      req.body;
 
     const user = await User.findById(userId);
 
     if (!user.wallet || user.wallet.length === 0) {
-      user.wallet = [{
-        available_amount: 0,
-        history: [],
-        currency: {
-          name: currency.name,
-          sign: currency.sign
-        }
-      }];
+      user.wallet = [
+        {
+          available_amount: 0,
+          history: [],
+          currency: {
+            name: currency.name,
+            sign: currency.sign,
+          },
+        },
+      ];
     }
 
-    const wallet = user.wallet[0];  
+    const wallet = user.wallet[0];
 
     wallet.available_amount = wallet.available_amount + amount;
-    
+
     const transaction = {
       amount: amount,
       time: new Date(),
       how: "Added through API",
-      in_out: transaction_type,  
+      in_out: transaction_type,
       transaction_type: "Add Money",
       payment_method: payment_method,
       status: status,
-      metadata: {}
+      metadata: {},
     };
 
     wallet.history.push(transaction);
 
     await user.save();
 
-    return res
-      .status(constants.status_code.header.ok)
-      .send({ statusCode: 200, data: user, success: true, message: "Money added to wallet successfully" });
+    return res.status(constants.status_code.header.ok).send({
+      statusCode: 200,
+      data: user,
+      success: true,
+      message: "Money added to wallet successfully",
+    });
   } catch (error) {
     return res
       .status(constants.status_code.header.server_error)
@@ -439,28 +445,32 @@ exports.updateScoreboard = async (req, res) => {
     const { scoreboard } = req.body; // Get the scoreboard data from the request body
 
     if (!scoreboard) {
-      return res.status(400).json({ success: false, message: "No scoreboard data provided." });
+      return res
+        .status(400)
+        .json({ success: false, message: "No scoreboard data provided." });
     }
 
     // Retrieve the user
     const user = await User.findById(userId);
 
     if (!user) {
-      return res.status(404).json({ success: false, message: "User not found." });
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found." });
     }
 
     // Ensure that the scoreboard is initialized as an object if it's not already
-    if (typeof user.scoreboard !== 'object' || !user.scoreboard) {
+    if (typeof user.scoreboard !== "object" || !user.scoreboard) {
       user.scoreboard = {
         rank_level: {
           rank: 0,
-          rank_title: '',
-          achievements: []
+          rank_title: "",
+          achievements: [],
         },
         points: 0,
         points_history: [],
         user_progress: 0,
-        win_rate: 0
+        win_rate: 0,
       };
     }
 
@@ -470,13 +480,15 @@ exports.updateScoreboard = async (req, res) => {
         user.scoreboard.rank_level.rank = scoreboard.rank_level.rank;
       }
       if (scoreboard.rank_level.rank_title !== undefined) {
-        user.scoreboard.rank_level.rank_title = scoreboard.rank_level.rank_title;
+        user.scoreboard.rank_level.rank_title =
+          scoreboard.rank_level.rank_title;
       }
       if (scoreboard.rank_level.achievements) {
-        user.scoreboard.rank_level.achievements = scoreboard.rank_level.achievements.map(achievement => ({
-          volume: achievement.volume || 0,
-          type: achievement.type || ''
-        }));
+        user.scoreboard.rank_level.achievements =
+          scoreboard.rank_level.achievements.map((achievement) => ({
+            volume: achievement.volume || 0,
+            type: achievement.type || "",
+          }));
       }
     }
 
@@ -485,10 +497,10 @@ exports.updateScoreboard = async (req, res) => {
     }
 
     if (scoreboard.points_history) {
-      scoreboard.points_history.forEach(history => {
+      scoreboard.points_history.forEach((history) => {
         user.scoreboard.points_history.push({
           points: history.points,
-          date: history.date || Date.now()
+          date: history.date || Date.now(),
         });
       });
     }
@@ -504,9 +516,12 @@ exports.updateScoreboard = async (req, res) => {
     // Save the updated user
     const updatedUser = await user.save();
 
-    return res
-      .status(constants.status_code.header.ok)
-      .send({ statusCode: 200, data: updatedUser.scoreboard, success: true, message: "Scoreboard updated successfully." });
+    return res.status(constants.status_code.header.ok).send({
+      statusCode: 200,
+      data: updatedUser.scoreboard,
+      success: true,
+      message: "Scoreboard updated successfully.",
+    });
   } catch (error) {
     return res
       .status(constants.status_code.header.server_error)
@@ -527,33 +542,27 @@ exports.getNextProfiles = async (req, res) => {
       .limit(limit);
 
     if (profiles.length === 0) {
-      return res
-        .status(constants.status_code.header.ok)
-        .send({
-          statusCode: 200,
-          data: [],
-          success: true,
-          message: "No more profiles to fetch."
-        });
+      return res.status(constants.status_code.header.ok).send({
+        statusCode: 200,
+        data: [],
+        success: true,
+        message: "No more profiles to fetch.",
+      });
     }
 
-    return res
-      .status(constants.status_code.header.ok)
-      .send({
-        statusCode: 200,
-        data: profiles,
-        success: true,
-        currentPage: page,
-        message: "Profiles fetched successfully."
-      });
+    return res.status(constants.status_code.header.ok).send({
+      statusCode: 200,
+      data: profiles,
+      success: true,
+      currentPage: page,
+      message: "Profiles fetched successfully.",
+    });
   } catch (error) {
-    return res
-      .status(constants.status_code.header.server_error)
-      .send({
-        statusCode: 500,
-        error: error.message,
-        success: false,
-      });
+    return res.status(constants.status_code.header.server_error).send({
+      statusCode: 500,
+      error: error.message,
+      success: false,
+    });
   }
 };
 
@@ -564,7 +573,7 @@ exports.likeProfile = async (req, res) => {
     const user = await User.findById(userId);
     const targetProfile = await User.findById(targetProfileId);
 
-    if (action === 'like') {
+    if (action === "like") {
       const isMutualLike = targetProfile.likeProfile.includes(userId);
 
       if (isMutualLike) {
@@ -582,13 +591,11 @@ exports.likeProfile = async (req, res) => {
         await user.save();
         await newChat.save();
 
-        return res
-          .status(constants.status_code.header.ok) 
-          .send({
-            statusCode: constants.status_code.header.ok,
-            success: true,
-            message: "It's a match! Chat has been initiated.",
-          });
+        return res.status(constants.status_code.header.ok).send({
+          statusCode: constants.status_code.header.ok,
+          success: true,
+          message: "It's a match! Chat has been initiated.",
+        });
       }
 
       if (!targetProfile.likeProfile.includes(userId)) {
@@ -596,40 +603,30 @@ exports.likeProfile = async (req, res) => {
         await user.save();
       }
 
-      return res
-        .status(constants.status_code.header.ok)
-        .send({
-          statusCode: constants.status_code.header.ok,
-          success: true,
-          message: "Profile liked.",
-        });
-
-    } else if (action === 'dislike') {
-      return res
-        .status(constants.status_code.header.ok)
-        .send({
-          statusCode: constants.status_code.header.ok,
-          success: true,
-          message: "Profile disliked.",
-        });
+      return res.status(constants.status_code.header.ok).send({
+        statusCode: constants.status_code.header.ok,
+        success: true,
+        message: "Profile liked.",
+      });
+    } else if (action === "dislike") {
+      return res.status(constants.status_code.header.ok).send({
+        statusCode: constants.status_code.header.ok,
+        success: true,
+        message: "Profile disliked.",
+      });
     }
 
-    return res
-      .status(constants.status_code.header.bad_request) 
-      .send({
-        statusCode: constants.status_code.header.bad_request,
-        success: false,
-        message: "Invalid action. Use 'like' or 'dislike'.",
-      });
-
+    return res.status(constants.status_code.header.bad_request).send({
+      statusCode: constants.status_code.header.bad_request,
+      success: false,
+      message: "Invalid action. Use 'like' or 'dislike'.",
+    });
   } catch (error) {
-    return res
-      .status(constants.status_code.header.server_error)
-      .send({
-        statusCode: constants.status_code.header.server_error,
-        error: error.message,
-        success: false,
-      });
+    return res.status(constants.status_code.header.server_error).send({
+      statusCode: constants.status_code.header.server_error,
+      error: error.message,
+      success: false,
+    });
   }
 };
 
@@ -639,19 +636,17 @@ exports.getHomeData = async (req, res) => {
 
     const user = await User.findById(userId)
       .populate({
-        path: 'recentPlayGames', 
-        select: 'gameName gameId updatedAt game_bg_image'
+        path: "recentPlayGames",
+        select: "gameName gameId updatedAt game_bg_image",
       })
-      .select('recentPlayGames'); 
+      .select("recentPlayGames");
 
     if (!user) {
-      return res
-        .status(constants.status_code.header.not_found)
-        .send({
-          statusCode: constants.status_code.header.not_found,
-          success: false,
-          message: "User not found.",
-        });
+      return res.status(constants.status_code.header.not_found).send({
+        statusCode: constants.status_code.header.not_found,
+        success: false,
+        message: "User not found.",
+      });
     }
 
     const recentPlays = user.recentPlayGames;
@@ -661,49 +656,43 @@ exports.getHomeData = async (req, res) => {
         $project: {
           full_name: 1,
           profile_image: 1,
-          likeProfileCount: { $size: { $ifNull: ["$likeProfile", []] } } 
-        }
+          likeProfileCount: { $size: { $ifNull: ["$likeProfile", []] } },
+        },
       },
-      { $sort: { likeProfileCount: -1 } }, 
-      { $limit: 10 } 
+      { $sort: { likeProfileCount: -1 } },
+      { $limit: 10 },
     ]);
 
-    
-    // const trendingLive = await LiveGame.find({ liveStatus: "active" }) 
-    //   .sort({ updatedAt: -1 }) 
-    //   .limit(10)  
-    //   .select('gameName liveStatus updatedAt'); 
+    // const trendingLive = await LiveGame.find({ liveStatus: "active" })
+    //   .sort({ updatedAt: -1 })
+    //   .limit(10)
+    //   .select('gameName liveStatus updatedAt');
 
-    return res
-      .status(constants.status_code.header.ok)
-      .send({
-        statusCode: 200,
-        success: true,
-        message: "Home data fetched successfully.",
-        data: {
-          recentPlays,
-          popularProfiles,
-          // trendingLive,
-        },
-      });
-
+    return res.status(constants.status_code.header.ok).send({
+      statusCode: 200,
+      success: true,
+      message: "Home data fetched successfully.",
+      data: {
+        recentPlays,
+        popularProfiles,
+        // trendingLive,
+      },
+    });
   } catch (error) {
-    return res
-      .status(constants.status_code.header.server_error)
-      .send({
-        statusCode: 500,
-        error: error.message,
-        success: false,
-      });
+    return res.status(constants.status_code.header.server_error).send({
+      statusCode: 500,
+      error: error.message,
+      success: false,
+    });
   }
 };
 
 exports.getPlayData = async (req, res) => {
   try {
     const userId = req.params.id;
-    
+
     // Fetch the current user's profile for their location
-    const user = await User.findById(userId).select('location');
+    const user = await User.findById(userId).select("location");
 
     // Check if user location is valid and has coordinates
     // if (!user || !user.location || !user.location.coordinates || user.location.coordinates.length !== 2) {
@@ -724,13 +713,13 @@ exports.getPlayData = async (req, res) => {
         $project: {
           gameId: 1,
           gameName: 1,
-          numberOfMeetings: { $size: { $ifNull: ["$meetings", []] } } // Safely handle missing meetings
-        }
+          numberOfMeetings: { $size: { $ifNull: ["$meetings", []] } }, // Safely handle missing meetings
+        },
       },
       {
-        $sort: { numberOfMeetings: -1 }
+        $sort: { numberOfMeetings: -1 },
       },
-      { $limit: 4 } 
+      { $limit: 4 },
     ]);
 
     // Fetch neighbour profiles based on the user's location
@@ -739,54 +728,49 @@ exports.getPlayData = async (req, res) => {
         $geoNear: {
           near: {
             type: "Point", // Ensure this is exactly "Point"
-            coordinates: userLocation // [longitude, latitude]
+            coordinates: userLocation, // [longitude, latitude]
           },
-          distanceField: "distance", 
+          distanceField: "distance",
           spherical: true, // Perform spherical calculations
-          key: "location" // Use the location field for the geospatial query
-        }
+          key: "location", // Use the location field for the geospatial query
+        },
       },
       {
-        $match: { 
+        $match: {
           _id: { $ne: new ObjectId(userId) }, // Exclude current user
-          distance: { $lte: 5000 } // Limit to profiles within 5km distance
-        }
+          distance: { $lte: 5000 }, // Limit to profiles within 5km distance
+        },
       },
       {
-        $limit: 10
+        $limit: 10,
       },
       {
         $project: {
           full_name: 1,
           profile_image: 1,
           location: 1,
-          distance: 1
-        }
-      }
+          distance: 1,
+        },
+      },
     ]);
 
     // Return the compiled play data
-    return res
-      .status(constants.status_code.header.ok)
-      .send({
-        statusCode: 200,
-        success: true,
-        message: "Play data fetched successfully.",
-        data: {
-          popularGames,
-          neighbourProfiles,
-        },
-      });
-
+    return res.status(constants.status_code.header.ok).send({
+      statusCode: 200,
+      success: true,
+      message: "Play data fetched successfully.",
+      data: {
+        popularGames,
+        neighbourProfiles,
+      },
+    });
   } catch (error) {
     // Error handling
-    return res
-      .status(constants.status_code.header.server_error)
-      .send({
-        statusCode: 500,
-        error: error.message,
-        success: false,
-      });
+    return res.status(constants.status_code.header.server_error).send({
+      statusCode: 500,
+      error: error.message,
+      success: false,
+    });
   }
 };
 
@@ -796,13 +780,11 @@ exports.getFollowers = async (req, res) => {
 
     const user = await User.findById(userId).select("followers");
     if (!user) {
-      return res
-        .status(constants.status_code.header.not_found)
-        .send({
-          statusCode: constants.status_code.header.not_found,
-          success: false,
-          message: "User not found.",
-        });
+      return res.status(constants.status_code.header.not_found).send({
+        statusCode: constants.status_code.header.not_found,
+        success: false,
+        message: "User not found.",
+      });
     }
 
     const followers = await User.find({ _id: { $in: user.followers } }).select(
@@ -814,17 +796,15 @@ exports.getFollowers = async (req, res) => {
       success: true,
       message: "Followers fetched successfully.",
       data: {
-        followers
+        followers,
       },
     });
   } catch (error) {
-    return res
-      .status(constants.status_code.header.server_error)
-      .send({
-        statusCode: constants.status_code.header.server_error,
-        error: error.message,
-        success: false,
-      });
+    return res.status(constants.status_code.header.server_error).send({
+      statusCode: constants.status_code.header.server_error,
+      error: error.message,
+      success: false,
+    });
   }
 };
 
@@ -834,13 +814,11 @@ exports.getFollowing = async (req, res) => {
 
     const user = await User.findById(userId).select("follows");
     if (!user) {
-      return res
-        .status(constants.status_code.header.not_found)
-        .send({
-          statusCode: constants.status_code.header.not_found,
-          success: false,
-          message: "User not found.",
-        });
+      return res.status(constants.status_code.header.not_found).send({
+        statusCode: constants.status_code.header.not_found,
+        success: false,
+        message: "User not found.",
+      });
     }
 
     const following = await User.find({ _id: { $in: user.follows } }).select(
@@ -852,17 +830,15 @@ exports.getFollowing = async (req, res) => {
       success: true,
       message: "Following fetched successfully.",
       data: {
-        following
+        following,
       },
     });
   } catch (error) {
-    return res
-      .status(constants.status_code.header.server_error)
-      .send({
-        statusCode: constants.status_code.header.server_error,
-        error: error.message,
-        success: false,
-      });
+    return res.status(constants.status_code.header.server_error).send({
+      statusCode: constants.status_code.header.server_error,
+      error: error.message,
+      success: false,
+    });
   }
 };
 
@@ -913,7 +889,7 @@ exports.followUnfollow = async (req, res) => {
   try {
     const { targetUserId, action } = req.body;
     const userId = req.user.userId;
-    
+
     const user = await User.findById(userId);
     const targetUser = await User.findById(targetUserId);
 
@@ -941,10 +917,14 @@ exports.followUnfollow = async (req, res) => {
         message: `You are now following ${targetUser.full_name}.`,
       });
     } else if (action === "unfollow") {
-      user.follows = user.follows.filter((id) => id.toString() !== targetUserId);
+      user.follows = user.follows.filter(
+        (id) => id.toString() !== targetUserId
+      );
       await user.save();
 
-      targetUser.followers = targetUser.followers.filter((id) => id.toString() !== userId);
+      targetUser.followers = targetUser.followers.filter(
+        (id) => id.toString() !== userId
+      );
       await targetUser.save();
 
       return res.status(constants.status_code.header.ok).send({
@@ -985,6 +965,260 @@ exports.getWalletTransactions = async (req, res) => {
       statusCode: 500,
       error: error.message,
       success: false,
+    });
+  }
+};
+
+exports.toggleBFF = async (req, res) => {
+  try {
+    const { userId, targetUserId } = req.body;
+
+    if (!userId || !targetUserId) {
+      return res.status(400).send({
+        statusCode: 400,
+        success: false,
+        error: "User ID and Target User ID are required.",
+      });
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).send({
+        statusCode: 404,
+        success: false,
+        error: "User not found.",
+      });
+    }
+
+    const targetUser = await User.findById(targetUserId);
+    if (!targetUser) {
+      return res.status(404).send({
+        statusCode: 404,
+        success: false,
+        error: "Target user not found.",
+      });
+    }
+
+    const isBFF = user.BFFs.includes(targetUserId);
+
+    if (isBFF) {
+      user.BFFs = user.BFFs.filter((id) => id.toString() !== targetUserId);
+      await user.save();
+
+      return res.status(constants.status_code.header.ok).send({
+        statusCode: 200,
+        success: true,
+        message: "User removed from BFFs successfully.",
+        data: user.BFFs,
+      });
+    } else {
+      user.BFFs.push(targetUserId);
+      await user.save();
+
+      return res.status(constants.status_code.header.ok).send({
+        statusCode: 200,
+        success: true,
+        message: "User added to BFFs successfully.",
+        data: user.BFFs,
+      });
+    }
+  } catch (error) {
+    return res.status(constants.status_code.header.server_error).send({
+      statusCode: 500,
+      success: false,
+      error: error.message,
+    });
+  }
+};
+
+exports.blockUser = async (req, res) => {
+  try {
+    const { userId, targetUserId } = req.body;
+
+    if (!userId || !targetUserId) {
+      return res.status(constants.status_code.header.bad_request).send({
+        statusCode: 400,
+        success: false,
+        error: "Both userId and targetUserId are required.",
+      });
+    }
+
+    const user = await User.findById(userId);
+    const targetUser = await User.findById(targetUserId);
+
+    if (!user || !targetUser) {
+      return res.status(constants.status_code.header.not_found).send({
+        statusCode: 404,
+        success: false,
+        error: "User not found.",
+      });
+    }
+
+    if (!user.blockedAccount.includes(targetUserId)) {
+      user.blockedAccount.push(targetUserId);
+      await user.save();
+    }
+
+    return res.status(constants.status_code.header.ok).send({
+      statusCode: 200,
+      success: true,
+      message: "User blocked successfully.",
+      data: user.blockedAccount,
+    });
+  } catch (error) {
+    return res.status(constants.status_code.header.server_error).send({
+      statusCode: 500,
+      success: false,
+      error: error.message,
+    });
+  }
+};
+
+exports.unblockUser = async (req, res) => {
+  try {
+    const { userId, targetUserId } = req.body;
+
+    if (!userId || !targetUserId) {
+      return res.status(constants.status_code.header.bad_request).send({
+        statusCode: 400,
+        success: false,
+        error: "Both userId and targetUserId are required.",
+      });
+    }
+
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(constants.status_code.header.not_found).send({
+        statusCode: 404,
+        success: false,
+        error: "User not found.",
+      });
+    }
+
+    user.blockedAccount = user.blockedAccount.filter(
+      (id) => id.toString() !== targetUserId
+    );
+
+    await user.save();
+
+    return res.status(constants.status_code.header.ok).send({
+      statusCode: 200,
+      success: true,
+      message: "User unblocked successfully.",
+      data: user.blockedAccount,
+    });
+  } catch (error) {
+    return res.status(constants.status_code.header.server_error).send({
+      statusCode: 500,
+      success: false,
+      error: error.message,
+    });
+  }
+};
+
+exports.requestEmailChange = async (req, res) => {
+  try {
+    const { userId, newEmail } = req.body;
+
+    if (!userId || !newEmail) {
+      return res.status(constants.status_code.header.bad_request).send({
+        statusCode: 400,
+        success: false,
+        error: "User ID and new email are required.",
+      });
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(constants.status_code.header.not_found).send({
+        statusCode: 404,
+        success: false,
+        error: "User not found.",
+      });
+    }
+
+    const emailExists = await User.findOne({ email: newEmail });
+    if (emailExists) {
+      return res.status(constants.status_code.header.server_error).send({
+        statusCode: 409,
+        success: false,
+        error: "Email already in use.",
+      });
+    }
+
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+    user.emailOtp = otp;
+    // user.tempEmail = newEmail;
+    await user.save();
+
+    const htmlContent = `
+      <h4>Your OTP is: ${otp}</h4>
+      <p>Regards,<br>Tinder Team</p>
+    `;
+
+    await sendMail(newEmail, "Your OTP Code", htmlContent);
+
+    return res.status(constants.status_code.header.ok).send({
+      statusCode: 200,
+      success: true,
+      message: "OTP sent to new email. Please verify.",
+      data: { newEmail: newEmail },
+    });
+  } catch (error) {
+    return res.status(constants.status_code.header.server_error).send({
+      statusCode: 500,
+      success: false,
+      error: error.message,
+    });
+  }
+};
+
+exports.verifyEmailOtp = async (req, res) => {
+  try {
+    const { userId, otp } = req.body;
+
+    if (!userId || !otp) {
+      return res.status(constants.status_code.header.bad_request).send({
+        statusCode: 400,
+        success: false,
+        error: "User ID and OTP are required.",
+      });
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(constants.status_code.header.not_found).send({
+        statusCode: 404,
+        success: false,
+        error: "User not found.",
+      });
+    }
+
+    if (user.emailOtp !== otp) {
+      return res.status(constants.status_code.header.unauthorized).send({
+        statusCode: 401,
+        success: false,
+        error: "Invalid OTP.",
+      });
+    }
+
+    // user.email = user.tempEmail;
+    user.emailOtp = null;
+    await user.save();
+
+    return res.status(constants.status_code.header.ok).send({
+      statusCode: 200,
+      success: true,
+      message: "Email updated successfully.",
+      data: { email: user.email },
+    });
+  } catch (error) {
+    return res.status(constants.status_code.header.server_error).send({
+      statusCode: 500,
+      success: false,
+      error: error.message,
     });
   }
 };

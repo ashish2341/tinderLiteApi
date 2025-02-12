@@ -1,7 +1,10 @@
 const express = require("express");
 
 const router = express.Router();
-const { uploadSingleFile, handleFileUpload } = require("../../helper/imgUpload");
+const {
+  uploadSingleFile,
+  handleFileUpload,
+} = require("../../helper/imgUpload");
 
 // const { validate } = require('../../helper/customValidation');
 // const auth = require('../middleware/auth');
@@ -26,10 +29,19 @@ const {
   getFollowing,
   getPopularProfiles,
   followUnfollow,
-  getWalletTransactions
+  getWalletTransactions,
+  blockUser,
+  toggleBFF,
+  unblockUser, requestEmailChange, verifyEmailOtp
 } = require("../controllers/userController");
-const { getChats } =  require("../controllers/chatsController");
-const { createCommunity, getAllCommunities, updateCommunity, getAllComments, getAllLikes } = require("../controllers/communityController")
+const { getChats } = require("../controllers/chatsController");
+const {
+  createCommunity,
+  getAllCommunities,
+  updateCommunity,
+  getAllComments,
+  getAllLikes,
+} = require("../controllers/communityController");
 const { verifyToken } = require("../middleware/role");
 // const validateRole = require('../middleware/role');
 // const { registerUpdateSchema, passwordSchema } = require('../validators/authValidator');
@@ -59,6 +71,11 @@ router.post("/followUnfollow", verifyToken, followUnfollow);
 router.get("/getWalletTransactions/:id", getWalletTransactions);
 router.get("/getAllComments/:id", getAllComments);
 router.get("/getAllLikes/:id", getAllLikes);
+router.put("/blockUser", blockUser);
+router.put("/toggleBFF", toggleBFF);
+router.put("/unblockUser", unblockUser);
+router.post("/requestEmailChange", requestEmailChange);
+router.post("/verifyEmailOtp", verifyEmailOtp);
 
 // router.get('/allUser',auth,validate(getRecordsSchema,'query'),validateRole(["Admin"]),getAllUser)
 // router.get('/user/:id',auth,validate(idSchema,'params'),getUserById)
