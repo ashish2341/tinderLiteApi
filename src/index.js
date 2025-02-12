@@ -42,18 +42,17 @@ app.use("/uploads", express.static(path.join(__dirname, "..", "uploads")));
 io.on('connection', (socket) => {
   console.log('A user connected', socket.id);
 
-  // Listen for private messages
   socket.on('chat-message', async (data) => {
     const { sender, target, content, timestamp } = data;
 
     try {
-      const datenow = Date.now()
+      // const datenow = Date.now()
       
       const newMessage = new Chats({
         sender: sender,
         target: target,
         content: content,
-        timestamp: timestamp
+        // timestamp: timestamp
       });
 
       await newMessage.save();

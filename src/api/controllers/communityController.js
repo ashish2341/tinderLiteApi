@@ -70,6 +70,36 @@ exports.getAllCommunities = async (req, res) => {
   }
 };
 
+exports.getCommunitiesByToken = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    // const page = parseInt(req.query.page) || 1;
+    // const limit = parseInt(req.query.limit) || 10;
+    // const sortBy = req.query.sortBy || "createdAt";
+    // const order = req.query.order === "desc" ? -1 : 1;
+
+    // const skip = (page - 1) * limit;
+
+    const communities = await Community.find({ createdBy: userId }).populate(
+      "createdBy",
+      "full_name email profile_image"
+    );
+
+    // const totalCommunities = await Community.countDocuments();
+
+    return res.status(constants.status_code.header.ok).send({
+      statusCode: 200,
+      data: communities,
+      success: true,
+      message: "Communities fetched successfully.",
+    });
+  } catch (error) {
+    return res
+      .status(constants.status_code.header.server_error)
+      .send({ statusCode: 500, error: error.message, success: false });
+  }
+};
+
 exports.updateCommunity = async (req, res) => {
   try {
     const communityId = req.params.id;
