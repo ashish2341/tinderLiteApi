@@ -115,12 +115,12 @@ exports.loginUserData = async (req, res) => {
     //     message: "You are already logged in on another device",
     //   };
     // }
-    let message = "Current User Data";
+    
     return res.status(constants.status_code.header.ok).send({
       statusCode: 200,
       data: userData,
       success: true,
-      message: message,
+      message: "Current User Data",
     });
   } catch (error) {
     return res
@@ -191,6 +191,7 @@ exports.updateUsers = async (req, res) => {
       deactiveAccount,
       blockByAdmin,
       interest_in_gender,
+      tags
     } = req.body;
 
     const updateUser = {};
@@ -235,6 +236,7 @@ exports.updateUsers = async (req, res) => {
     if (deactiveAccount) updateUser.deactiveAccount = deactiveAccount;
     if (blockByAdmin) updateUser.blockByAdmin = blockByAdmin;
     if (interest_in_gender) updateUser.interest_in_gender = interest_in_gender;
+    if (tags) updateUser.tags = tags;
 
     if (location && location.coordinates) {
       updateUser.location = {
