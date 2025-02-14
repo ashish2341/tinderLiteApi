@@ -32,7 +32,11 @@ const {
   getWalletTransactions,
   blockUser,
   toggleBFF,
-  unblockUser, requestEmailChange, verifyEmailOtp
+  unblockUser,
+  requestEmailChange,
+  verifyEmailOtp,
+  emailVerify,
+  verifyOtp,
 } = require("../controllers/userController");
 const { getChats } = require("../controllers/chatsController");
 const {
@@ -76,6 +80,8 @@ router.put("/toggleBFF", toggleBFF);
 router.put("/unblockUser", unblockUser);
 router.post("/requestEmailChange", requestEmailChange);
 router.post("/verifyEmailOtp", verifyEmailOtp);
+router.post("/emailVerify", emailVerify);
+router.post("/verifyOtp", verifyOtp);
 
 // router.get('/allUser',auth,validate(getRecordsSchema,'query'),validateRole(["Admin"]),getAllUser)
 // router.get('/user/:id',auth,validate(idSchema,'params'),getUserById)

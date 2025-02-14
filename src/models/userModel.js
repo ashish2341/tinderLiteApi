@@ -3,11 +3,11 @@ const walletSchema = require("./walletModel").schema;
 
 const userSchema = new mongoose.Schema(
   {
-    full_name: { type: String, required: true },
-    user_name: { type: String, required: true, unique: true },
+    full_name: { type: String },
+    user_name: { type: String, unique: true },
     email: { type: String, required: true, unique: true },
-    phone: { type: String, required: true, unique: true },
-    gender: { type: String, required: true },
+    phone: { type: String, unique: true },
+    gender: { type: String },
     profile_image: { type: String },
     deactiveAccount: {
       type: Boolean,
@@ -80,6 +80,7 @@ const userSchema = new mongoose.Schema(
         app_name: { type: String },
       },
     ],
+    otpExpiresAt: { type: Date },
     emailOtp: { type: String },
     occupation: { type: String },
     specialization: { type: String },

@@ -6,7 +6,8 @@ const allRouters = require("./api/routers/routeIndex");
 const fileUpload = require("express-fileupload");
 const http = require("http");
 const server = http.createServer(app);
-const Chats = require("./models/chatsModel")
+const Chats = require("./models/chatsModel");
+const socketIo = require("socket.io");
 
 const path = require("path");
 const { connectDB } = require("./db/db");
@@ -18,11 +19,12 @@ connectDB().catch((err) => {
   process.exit(1);
 });
 
-const io = require("socket.io")(server, {
+const io = socketIo(server, {
   cors: {
     origin: "*",
     methods: ["GET", "POST"],
   },
+  allowEIO3: true,
 });
 
 app.use(
@@ -30,7 +32,7 @@ app.use(
     useTempFiles: true,
   })
 );
-app.use(express.json());
+app.use(express.json()); 
 app.use(express.urlencoded({ extended: false }));
 app.use(cors());
 
