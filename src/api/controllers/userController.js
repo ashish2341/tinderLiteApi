@@ -10,7 +10,7 @@ const mongoose = require("mongoose");
 const ObjectId = mongoose.Types.ObjectId;
 const cloudinary = require("cloudinary").v2;
 const Chat = require("../../models/chatsModel");
-const sendMail = require("../../helper/sendMail")
+const sendMail = require("../../helper/sendMail");
 //import httpStatus from "http-status";
 cloudinary.config({
   cloud_name: "dxjyglb16",
@@ -115,7 +115,7 @@ exports.loginUserData = async (req, res) => {
     //     message: "You are already logged in on another device",
     //   };
     // }
-    
+
     return res.status(constants.status_code.header.ok).send({
       statusCode: 200,
       data: userData,
@@ -191,7 +191,7 @@ exports.updateUsers = async (req, res) => {
       deactiveAccount,
       blockByAdmin,
       interest_in_gender,
-      tags
+      tags,
     } = req.body;
 
     const updateUser = {};
@@ -1177,6 +1177,58 @@ exports.requestEmailChange = async (req, res) => {
   }
 };
 
+exports.emailVerify = async (req, res) => {
+  try {
+    const { email } = req.body;
+    const user = await User.findOne({ email });
+
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000);
+
+    const htmlContent = `
+      <h4>Your OTP is: ${otp}</h4>
+      <p>It will expire in 10 minutes.</p>
+      <p>Regards,<br>Tinder Team</p>
+    `;
+
+    await sendMail(email, "Your OTP Code", htmlContent);
+
+    if (!user) {
+      const userData = new User({
+        email,
+        emailOtp: otp,
+        otpExpiresAt,
+      });
+
+      const result = await userData.save();
+
+      return res.status(constants.status_code.header.ok).send({
+        statusCode: 200,
+        success: true,
+        message: "OTP sent to new email. Please verify.",
+        data: result,
+      });
+    } else {
+      user.emailOtp = otp;
+      user.otpExpiresAt = otpExpiresAt;
+      await user.save();
+
+      return res.status(constants.status_code.header.ok).send({
+        statusCode: 200,
+        success: true,
+        message: "OTP sent to new email. Please verify.",
+        data: user,
+      });
+    }
+  } catch (error) {
+    return res.status(constants.status_code.header.server_error).send({
+      statusCode: 500,
+      success: false,
+      error: error.message,
+    });
+  }
+};
+
 exports.verifyEmailOtp = async (req, res) => {
   try {
     const { userId, otp } = req.body;
@@ -1214,6 +1266,71 @@ exports.verifyEmailOtp = async (req, res) => {
       statusCode: 200,
       success: true,
       message: "Email updated successfully.",
+      data: { email: user.email },
+    });
+  } catch (error) {
+    return res.status(constants.status_code.header.server_error).send({
+      statusCode: 500,
+      success: false,
+      error: error.message,
+    });
+  }
+};
+
+exports.verifyOtp = async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+
+    if (!email || !otp) {
+      return res.status(constants.status_code.header.bad_request).send({
+        statusCode: 400,
+        success: false,
+        error: "Email and OTP are required.",
+      });
+    }
+
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res.status(constants.status_code.header.not_found).send({
+        statusCode: 404,
+        success: false,
+        error: "User not found.",
+      });
+    }
+
+    if (!user.otpExpiresAt || user.otpExpiresAt < new Date()) {
+      return res.status(constants.status_code.header.unauthorized).send({
+        statusCode: 401,
+        success: false,
+        error: "OTP expired. Please request a new one.",
+      });
+    }
+
+    if (user.emailOtp !== otp) {
+      return res.status(constants.status_code.header.unauthorized).send({
+        statusCode: 401,
+        success: false,
+        error: "Invalid OTP.",
+      });
+    }
+
+    user.emailOtp = null;
+    user.otpExpiresAt = null;
+    await user.save();
+
+    if (!user.user_name) {
+      return res.status(constants.status_code.header.server_error).send({
+        statusCode: 500,
+        success: false,
+        message: "Sign up user.",
+      });
+    }
+
+    return res.status(constants.status_code.header.ok).send({
+      statusCode: 200,
+      success: true,
+      message: "Email verified successfully.",
       data: { email: user.email },
     });
   } catch (error) {
