@@ -7,7 +7,7 @@ const fileUpload = require("express-fileupload");
 const http = require("http");
 const server = http.createServer(app);
 const Chats = require("./models/chatsModel");
-const socketIo = require("socket.io");
+const { Server } = require("socket.io");
 
 const path = require("path");
 const { connectDB } = require("./db/db");
@@ -19,27 +19,13 @@ connectDB().catch((err) => {
   process.exit(1);
 });
 
-const io = socketIo(server, {
+const io = new Server(server, {
   cors: {
     origin: "*",
     methods: ["GET", "POST"],
   },
   allowEIO3: true,
 });
-
-app.use(
-  fileUpload({
-    useTempFiles: true,
-  })
-);
-app.use(express.json()); 
-app.use(express.urlencoded({ extended: false }));
-app.use(cors());
-
-//routes
-app.use("/v1", allRouters);
-
-app.use("/uploads", express.static(path.join(__dirname, "..", "uploads")));
 
 io.on('connection', (socket) => {
   console.log('A user connected', socket.id);
@@ -67,29 +53,52 @@ io.on('connection', (socket) => {
     } catch (error) {
       console.error(error);
     }
-  });
+  }
+  );
 
-  socket.on('join-room', async (data) => {
-    let { sender, target } = data
-    socket.join(sender);
-    let userData = await Chats.find({
-      $or: [
-        { sender, target },
-        { sender: target, target: sender }
-      ]
-    }).sort({ timestamp: 1 })
+  // socket.on('join-room', async (data) => {
+  //   let { sender, target } = data
+  //   socket.join(sender);
+  //   let userData = await Chats.find({
+  //     $or: [
+  //       { sender, target },
+  //       { sender: target, target: sender }
+  //     ]
+  //   }).sort({ timestamp: 1 })
 
-    if (!userData) {
-      console.log("user data not found");
-    }
-    socket.emit('join-room', userData)
-    console.log(`User ${sender} joined the room`);
-  });
+  //   if (!userData) {
+  //     console.log("user data not found");
+  //   }
+  //   socket.emit('join-room', userData)
+  //   console.log(`User ${sender} joined the room`);
+  // });
 
-  socket.on('disconnect', () => {
-    console.log("A user disconnected", socket.id);
-  });
+  // socket.on('disconnect', () => {
+  //   console.log("A user disconnected", socket.id);
+  // });
 });
+
+app.use(express.static(path.resolve("../public")));
+
+app.get("/", (req, res) => {
+  return res.sendFile(path.join(__dirname, "..", "public", "index.html"));
+})
+
+app.use(
+  fileUpload({
+    useTempFiles: true,
+  })
+);
+app.use(express.json()); 
+app.use(express.urlencoded({ extended: false }));
+app.use(cors());
+
+//routes
+app.use("/v1", allRouters);
+
+app.use("/uploads", express.static(path.join(__dirname, "..", "uploads")));
+
+
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => console.log(`Server running on port ${PORT}`));

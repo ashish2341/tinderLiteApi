@@ -1342,6 +1342,37 @@ exports.verifyOtp = async (req, res) => {
   }
 };
 
+exports.getBFFList = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+
+    const user = await User.findById(userId)
+      .populate("BFFs", "full_name user_name profile_image")
+      .select("BFFs");
+
+    if (!user) {
+      return res.status(constants.status_code.header.not_found).send({
+        statusCode: 404,
+        success: false,
+        message: "User not found.",
+      });
+    }
+
+    return res.status(constants.status_code.header.ok).send({
+      statusCode: 200,
+      success: true,
+      message: "BFF list fetched successfully.",
+      data: user.BFFs,
+    });
+  } catch (error) {
+    return res.status(constants.status_code.header.server_error).send({
+      statusCode: 500,
+      success: false,
+      error: error.message,
+    });
+  }
+};
+
 // exports.getAllUser = async (req, res) => {
 //     try {
 //         const { page, pageSize } = req.query;
