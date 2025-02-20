@@ -37,6 +37,7 @@ const {
   verifyEmailOtp,
   emailVerify,
   verifyOtp,
+  getBFFList
 } = require("../controllers/userController");
 const { getChats } = require("../controllers/chatsController");
 const {
@@ -82,6 +83,7 @@ router.post("/requestEmailChange", requestEmailChange);
 router.post("/verifyEmailOtp", verifyEmailOtp);
 router.post("/emailVerify", emailVerify);
 router.post("/verifyOtp", verifyOtp);
+router.get("/getBFFList", verifyToken, getBFFList);
 
 // router.get('/allUser',auth,validate(getRecordsSchema,'query'),validateRole(["Admin"]),getAllUser)
 // router.get('/user/:id',auth,validate(idSchema,'params'),getUserById)

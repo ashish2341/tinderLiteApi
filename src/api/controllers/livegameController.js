@@ -53,7 +53,7 @@ exports.addUserInMeeting = async (req, res) => {
         return res
           .status(createMeetingResponse.status)
           .json({ error: "Failed to create a new Dyte meeting" });
-      }
+      };
       //bbb057a6-15a5-4ae8-93de-15adec89156e
 
       const newMeeting = createMeetingResponse.data.data;
