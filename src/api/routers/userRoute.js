@@ -55,7 +55,7 @@ router.post("/addUser", addUser);
 router.post("/login", login);
 router.get("/loginUserData", verifyToken, loginUserData);
 router.get("/getAllUsers", getAllUsers);
-router.put("/updateUser/:id", updateUsers);
+router.put("/updateUser", verifyToken, updateUsers);
 router.get("/getUserById/:id", getUserById);
 router.delete("/deleteUser/:id", deleteUser);
 router.post("/connect-nearby-users", nearbyUser);
