@@ -169,7 +169,7 @@ exports.getAllUsers = async (req, res) => {
 
 exports.updateUsers = async (req, res) => {
   try {
-    const userId = req.params.id;
+    const userId = req.user.userId;
     const {
       full_name,
       user_name,
@@ -1317,11 +1317,17 @@ exports.verifyOtp = async (req, res) => {
     user.otpExpiresAt = null;
     await user.save();
 
+    let payload = { userId: user._id };
+      let token = jwt.sign(payload, process.env.SECRET_KEY, {
+        expiresIn: "360000s",
+      });
+
     if (!user.user_name) {
       return res.status(404).send({
         statusCode: 404,
         success: false,
-        message: "Otp verified successfully. Please sign up user."        
+        message: "Otp verified successfully. Please sign up user.",
+        token: token     
       });
     }
 
