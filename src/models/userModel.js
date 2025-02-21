@@ -4,9 +4,9 @@ const walletSchema = require("./walletModel").schema;
 const userSchema = new mongoose.Schema(
   {
     full_name: { type: String },
-    user_name: { type: String },
-    email: { type: String, required: true, unique: true },
-    phone: { type: String, unique: true },
+    user_name: { type: String, unique: false },
+    email: { type: String, required: true,  },
+    phone: { type: String },
     gender: { type: String },
     profile_image: { type: String },
     deactiveAccount: {
