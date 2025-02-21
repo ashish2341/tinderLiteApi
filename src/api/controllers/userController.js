@@ -1205,8 +1205,7 @@ exports.emailVerify = async (req, res) => {
       return res.status(constants.status_code.header.ok).send({
         statusCode: 200,
         success: true,
-        message: "OTP sent to new email. Please verify.",
-        data: result,
+        message: "OTP sent to new email. Please verify."
       });
     } else {
       user.emailOtp = otp;
@@ -1216,8 +1215,7 @@ exports.emailVerify = async (req, res) => {
       return res.status(constants.status_code.header.ok).send({
         statusCode: 200,
         success: true,
-        message: "OTP sent to new email. Please verify.",
-        data: user,
+        message: "OTP sent to new email. Please verify."
       });
     }
   } catch (error) {
@@ -1330,8 +1328,7 @@ exports.verifyOtp = async (req, res) => {
     return res.status(constants.status_code.header.ok).send({
       statusCode: 200,
       success: true,
-      message: "Email verified successfully.",
-      data: { email: user.email },
+      message: "Email verified successfully."
     });
   } catch (error) {
     return res.status(constants.status_code.header.server_error).send({
