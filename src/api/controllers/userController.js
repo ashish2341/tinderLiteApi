@@ -1318,17 +1318,18 @@ exports.verifyOtp = async (req, res) => {
     await user.save();
 
     if (!user.user_name) {
-      return res.status(constants.status_code.header.server_error).send({
-        statusCode: 500,
+      return res.status(404).send({
+        statusCode: 404,
         success: false,
-        message: "Sign up user.",
+        message: "Otp verified successfully. Please sign up user."        
       });
     }
 
     return res.status(constants.status_code.header.ok).send({
       statusCode: 200,
       success: true,
-      message: "Email verified successfully."
+      message: "Email verified successfully.",
+      data: user
     });
   } catch (error) {
     return res.status(constants.status_code.header.server_error).send({
