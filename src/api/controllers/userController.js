@@ -1327,7 +1327,7 @@ exports.verifyOtp = async (req, res) => {
         statusCode: 404,
         success: false,
         message: "Otp verified successfully. Please sign up user.",
-        token: token     
+        data: token     
       });
     }
 
