@@ -1290,7 +1290,7 @@ exports.verifyOtp = async (req, res) => {
     const user = await User.findOne({ email });
 
     if (!user) {
-      return res.status(constants.status_code.header.not_found).send({
+      return res.status(constants.status_code.header.ok).send({
         statusCode: 404,
         success: false,
         error: "User not found.",
@@ -1323,7 +1323,7 @@ exports.verifyOtp = async (req, res) => {
     });
 
     if (!user.user_name) {
-      return res.status(404).send({
+      return res.status(200).send({
         statusCode: 404,
         success: false,
         message: "Otp verified successfully. Please sign up user.",
