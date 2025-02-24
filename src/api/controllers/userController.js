@@ -11,7 +11,7 @@ const ObjectId = mongoose.Types.ObjectId;
 const cloudinary = require("cloudinary").v2;
 const Chat = require("../../models/chatsModel");
 const sendMail = require("../../helper/sendMail");
-//import httpStatus from "http-status";
+import httpStatus from "http-status";
 cloudinary.config({
   cloud_name: "dxjyglb16",
   api_key: "731694561994395",
@@ -100,7 +100,7 @@ exports.loginUserData = async (req, res) => {
     //const token = req.body.token;
     const userData = await User.findOne({ phone: phone });
     if (!userData) {
-      throw { code: httpStatus.NOT_FOUND, message: "User not found" };
+      throw { code: 404, message: "User not found" };
     }
     if (userData.blockByAdmin) {
       throw {
