@@ -11,7 +11,7 @@ const ObjectId = mongoose.Types.ObjectId;
 const cloudinary = require("cloudinary").v2;
 const Chat = require("../../models/chatsModel");
 const sendMail = require("../../helper/sendMail");
-import httpStatus from "http-status";
+const httpStatus = require("http-status");
 cloudinary.config({
   cloud_name: "dxjyglb16",
   api_key: "731694561994395",
@@ -120,7 +120,7 @@ exports.loginUserData = async (req, res) => {
       statusCode: 200,
       data: userData,
       success: true,
-      message: "Current User Data",
+      message: "Current User Data"
     });
   } catch (error) {
     return res
@@ -1205,7 +1205,7 @@ exports.emailVerify = async (req, res) => {
       return res.status(constants.status_code.header.ok).send({
         statusCode: 200,
         success: true,
-        message: "OTP sent to new email. Please verify."
+        message: "OTP sent to new email. Please verify.",
       });
     } else {
       user.emailOtp = otp;
@@ -1215,7 +1215,7 @@ exports.emailVerify = async (req, res) => {
       return res.status(constants.status_code.header.ok).send({
         statusCode: 200,
         success: true,
-        message: "OTP sent to new email. Please verify."
+        message: "OTP sent to new email. Please verify.",
       });
     }
   } catch (error) {
@@ -1318,16 +1318,16 @@ exports.verifyOtp = async (req, res) => {
     await user.save();
 
     let payload = { userId: user._id };
-      let token = jwt.sign(payload, process.env.SECRET_KEY, {
-        expiresIn: "360000s",
-      });
+    let token = jwt.sign(payload, process.env.SECRET_KEY, {
+      expiresIn: "360000s",
+    });
 
     if (!user.user_name) {
       return res.status(404).send({
         statusCode: 404,
         success: false,
         message: "Otp verified successfully. Please sign up user.",
-        data: token     
+        data: token,
       });
     }
 
@@ -1335,7 +1335,7 @@ exports.verifyOtp = async (req, res) => {
       statusCode: 200,
       success: true,
       message: "Email verified successfully.",
-      data: user
+      data: user,
     });
   } catch (error) {
     return res.status(constants.status_code.header.server_error).send({
